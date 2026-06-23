@@ -1,9 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Lead = {
+  id: string;
+  name: string;
+  niche: string;
+  city: string;
+  state: string;
+  email: string | null;
+  website: string | null;
+  score: number;
+  status: string;
+};
 
 export default function Page() {
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [error, setError] = useState("");
+
+  async function loadLeads() {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await fetch("/api/leads", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load leads");
+      setLeads(data.leads || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load leads");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function seedLeads() {
+    await fetch("/api/leads/seed", { cache: "no-store" });
+    await loadLeads();
+  }
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  const averageScore = useMemo(() => {
+    if (!leads.length) return 0;
+    return Math.round(leads.reduce((sum, lead) => sum + lead.score, 0) / leads.length);
+  }, [leads]);
 
   return (
     <main className="container">
@@ -15,14 +59,23 @@ export default function Page() {
           <button className="primary" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
           </button>
+          <button className="secondary button-reset" onClick={loadLeads}>Refresh Leads</button>
+          <button className="secondary button-reset" onClick={seedLeads}>Seed Test Leads</button>
           <a className="secondary" href="/api/health">Health Check</a>
         </div>
-        <p>{started ? "8 leads found. 5 drafts created. 0 emails sent without approval." : "Waiting to start."}</p>
+        <p>
+          {started
+            ? `${leads.length} database leads loaded. Draft creation is next. No emails sent without approval.`
+            : loading
+              ? "Loading database leads..."
+              : "Waiting to start."}
+        </p>
+        {error ? <p className="error">{error}</p> : null}
       </section>
 
       <section className="grid">
-        <div className="card"><span>Leads</span><strong>{started ? 8 : 0}</strong></div>
-        <div className="card"><span>Drafts</span><strong>{started ? 5 : 0}</strong></div>
+        <div className="card"><span>Leads</span><strong>{leads.length}</strong></div>
+        <div className="card"><span>Avg Score</span><strong>{averageScore}</strong></div>
         <div className="card"><span>Sent</span><strong>0</strong></div>
         <div className="card"><span>Approval</span><strong>ON</strong></div>
       </section>
@@ -37,9 +90,21 @@ export default function Page() {
         </div>
         <div className="card">
           <h2>CRM Preview</h2>
-          <div className="item"><strong>Emerald Coast Med Spa</strong><p>Med Spa</p><span className="badge">New Lead</span></div>
-          <div className="item"><strong>Precision Roofing Co</strong><p>Roofing</p><span className="badge">Draft Ready</span></div>
-          <div className="item"><strong>Gulf Breeze Auto Detail</strong><p>Auto Detail</p><span className="badge">Ready</span></div>
+          {loading ? <div className="item">Loading leads...</div> : null}
+          {!loading && !leads.length ? (
+            <div className="item">
+              <strong>No leads yet</strong>
+              <p>Click Seed Test Leads to add the first database records.</p>
+              <span className="badge">Empty</span>
+            </div>
+          ) : null}
+          {leads.map((lead) => (
+            <div className="item" key={lead.id}>
+              <strong>{lead.name}</strong>
+              <p>{lead.niche} • {lead.city}, {lead.state}</p>
+              <span className="badge">Score {lead.score} • {lead.status}</span>
+            </div>
+          ))}
         </div>
       </section>
     </main>
