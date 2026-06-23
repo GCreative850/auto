@@ -14,10 +14,21 @@ type Lead = {
   status: string;
 };
 
+type OutreachDraft = {
+  id: string;
+  leadId: string;
+  subject: string;
+  body: string;
+  status: string;
+  lead?: Lead;
+};
+
 export default function Page() {
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [draftLoading, setDraftLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [error, setError] = useState("");
 
   async function loadLeads() {
@@ -35,13 +46,44 @@ export default function Page() {
     }
   }
 
+  async function loadDrafts() {
+    try {
+      const res = await fetch("/api/outreach/drafts", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to load drafts");
+      setDrafts(data.drafts || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load drafts");
+    }
+  }
+
   async function seedLeads() {
     await fetch("/api/leads/seed", { cache: "no-store" });
     await loadLeads();
   }
 
+  async function createDraft(leadId: string) {
+    try {
+      setDraftLoading(true);
+      setError("");
+      const res = await fetch("/api/outreach/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to create draft");
+      await Promise.all([loadLeads(), loadDrafts()]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create draft");
+    } finally {
+      setDraftLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadLeads();
+    loadDrafts();
   }, []);
 
   const averageScore = useMemo(() => {
@@ -65,7 +107,7 @@ export default function Page() {
         </div>
         <p>
           {started
-            ? `${leads.length} database leads loaded. Draft creation is next. No emails sent without approval.`
+            ? `${leads.length} database leads loaded. ${drafts.length} outreach drafts created. No emails sent without approval.`
             : loading
               ? "Loading database leads..."
               : "Waiting to start."}
@@ -76,18 +118,11 @@ export default function Page() {
       <section className="grid">
         <div className="card"><span>Leads</span><strong>{leads.length}</strong></div>
         <div className="card"><span>Avg Score</span><strong>{averageScore}</strong></div>
-        <div className="card"><span>Sent</span><strong>0</strong></div>
+        <div className="card"><span>Drafts</span><strong>{drafts.length}</strong></div>
         <div className="card"><span>Approval</span><strong>ON</strong></div>
       </section>
 
       <section className="board">
-        <div className="card">
-          <h2>Workflow</h2>
-          <div className="item">Find businesses</div>
-          <div className="item">Score leads</div>
-          <div className="item">Create drafts</div>
-          <div className="item">Update CRM</div>
-        </div>
         <div className="card">
           <h2>CRM Preview</h2>
           {loading ? <div className="item">Loading leads...</div> : null}
@@ -103,6 +138,28 @@ export default function Page() {
               <strong>{lead.name}</strong>
               <p>{lead.niche} • {lead.city}, {lead.state}</p>
               <span className="badge">Score {lead.score} • {lead.status}</span>
+              <div className="item-actions">
+                <button className="secondary button-reset small" disabled={draftLoading} onClick={() => createDraft(lead.id)}>
+                  Create Outreach Draft
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="card">
+          <h2>Outreach Drafts</h2>
+          {!drafts.length ? (
+            <div className="item">
+              <strong>No drafts yet</strong>
+              <p>Create a draft from a lead. Emails still require manual approval.</p>
+              <span className="badge">Manual Approval</span>
+            </div>
+          ) : null}
+          {drafts.map((draft) => (
+            <div className="item" key={draft.id}>
+              <strong>{draft.subject}</strong>
+              <p>{draft.lead?.name || "Lead"} • {draft.status}</p>
+              <span className="badge">Saved Draft</span>
             </div>
           ))}
         </div>
