@@ -1,0 +1,145 @@
+:root {
+  color-scheme: dark;
+  --bg: #07080d;
+  --panel: #11131b;
+  --muted: #8d96a8;
+  --text: #f4f7fb;
+  --line: rgba(255, 255, 255, 0.1);
+  --accent: #7c5cff;
+  --good: #2ee59d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1d2040, var(--bg) 45%);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+.container {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 80px;
+}
+
+.hero {
+  display: grid;
+  gap: 20px;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(17, 19, 27, 0.86);
+  box-shadow: 0 20px 80px rgba(0,0,0,0.35);
+}
+
+.kicker {
+  color: var(--good);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(36px, 8vw, 72px);
+  line-height: 0.95;
+}
+
+p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.primary {
+  background: var(--accent);
+  color: white;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.secondary {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(17, 19, 27, 0.78);
+  padding: 18px;
+}
+
+.card strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 8px;
+}
+
+.card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.badge {
+  display: inline-block;
+  color: var(--good);
+  background: rgba(46, 229, 157, 0.12);
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .grid,
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 20px;
+  }
+}
