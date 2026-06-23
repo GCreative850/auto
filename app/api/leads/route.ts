@@ -8,11 +8,12 @@ export async function GET() {
       take: 50,
     });
 
-    return NextResponse.json({ ok: true, leads });
+    return NextResponse.json({ ok: true, route: "leads", leads });
   } catch (error) {
     return NextResponse.json(
       {
         ok: false,
+        route: "leads",
         error: "Failed to load leads",
         detail: error instanceof Error ? error.message : "Unknown error",
       },
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
+        route: "leads",
         error: "Failed to create lead",
         detail: error instanceof Error ? error.message : "Unknown error",
       },
