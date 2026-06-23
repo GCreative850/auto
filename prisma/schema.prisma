@@ -15,6 +15,13 @@ enum LeadStatus {
   LOST
 }
 
+enum DraftStatus {
+  DRAFT
+  APPROVED
+  SENT
+  FAILED
+}
+
 model Lead {
   id        String     @id @default(cuid())
   name      String
@@ -25,11 +32,26 @@ model Lead {
   website   String?
   score     Int        @default(50)
   status    LeadStatus @default(NEW)
+  drafts    OutreachDraft[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   @@index([status])
   @@index([city, state])
+}
+
+model OutreachDraft {
+  id        String      @id @default(cuid())
+  leadId    String
+  lead      Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subject   String
+  body      String
+  status    DraftStatus @default(DRAFT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([leadId])
+  @@index([status])
 }
 
 model AiActivityLog {
