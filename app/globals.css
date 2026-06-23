@@ -7,6 +7,7 @@
   --line: rgba(255, 255, 255, 0.1);
   --accent: #7c5cff;
   --good: #2ee59d;
+  --bad: #ff6b6b;
 }
 
 * {
@@ -79,6 +80,17 @@ p {
   color: white;
   padding: 14px 18px;
   border-radius: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.button-reset {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.error {
+  color: var(--bad);
   font-weight: 800;
 }
 
