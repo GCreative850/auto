@@ -26,6 +26,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .container {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -84,6 +89,13 @@ p {
   text-decoration: none;
 }
 
+.secondary.small {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
 .button-reset {
   font-family: inherit;
   font-size: inherit;
@@ -121,7 +133,7 @@ p {
 
 .board {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-top: 14px;
 }
@@ -133,6 +145,10 @@ p {
 
 .item:last-child {
   border-bottom: 0;
+}
+
+.item-actions {
+  margin-top: 8px;
 }
 
 .badge {
