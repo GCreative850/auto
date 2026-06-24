@@ -94,7 +94,7 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ</div>
+        <div className="kicker">AutoHQ • v0.2 Live DB + Drafts</div>
         <h1>Good Morning Gregory</h1>
         <p>Start the daily outreach workflow from one dashboard.</p>
         <div className="actions">
