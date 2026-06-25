@@ -28,6 +28,11 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [draftLoading, setDraftLoading] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const [finderLoading, setFinderLoading] = useState(false);
+  const [finderNiche, setFinderNiche] = useState("Med Spa");
+  const [finderCity, setFinderCity] = useState("Pensacola");
+  const [finderState, setFinderState] = useState("FL");
+  const [finderMessage, setFinderMessage] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [error, setError] = useState("");
@@ -61,6 +66,27 @@ export default function Page() {
   async function seedLeads() {
     await fetch("/api/leads/seed", { cache: "no-store" });
     await loadLeads();
+  }
+
+  async function findRealLeads() {
+    try {
+      setFinderLoading(true);
+      setFinderMessage("");
+      setError("");
+      const res = await fetch("/api/leads/find", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche: finderNiche, city: finderCity, state: finderState })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Lead finder failed");
+      setFinderMessage(`Imported ${data.importedCount} new leads. Skipped ${data.skippedCount} duplicates.`);
+      await loadLeads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lead finder failed");
+    } finally {
+      setFinderLoading(false);
+    }
   }
 
   async function createDraft(leadId: string) {
@@ -116,9 +142,9 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.3 Draft Approval</div>
+        <div className="kicker">AutoHQ • v0.4 Real Lead Finder</div>
         <h1>Good Morning Gregory</h1>
-        <p>Start the daily outreach workflow from one dashboard.</p>
+        <p>Find real businesses, create safe outreach drafts, approve them, then connect Gmail later.</p>
         <div className="actions">
           <button className="primary" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
@@ -129,12 +155,35 @@ export default function Page() {
         </div>
         <p>
           {started
-            ? `${leads.length} database leads loaded. ${drafts.length} outreach drafts created. ${approvedDrafts} approved. No emails sent without approval.`
+            ? `${leads.length} leads loaded. ${drafts.length} outreach drafts created. ${approvedDrafts} approved. No emails sent without approval.`
             : loading
               ? "Loading database leads..."
               : "Waiting to start."}
         </p>
         {error ? <p className="error">{error}</p> : null}
+      </section>
+
+      <section className="card finder-card">
+        <h2>Real Lead Finder</h2>
+        <p>Search real businesses by niche and city. Requires GOOGLE_PLACES_API_KEY in Vercel.</p>
+        <div className="finder-form">
+          <label>
+            Niche
+            <input value={finderNiche} onChange={(event) => setFinderNiche(event.target.value)} placeholder="Med Spa" />
+          </label>
+          <label>
+            City
+            <input value={finderCity} onChange={(event) => setFinderCity(event.target.value)} placeholder="Pensacola" />
+          </label>
+          <label>
+            State
+            <input value={finderState} onChange={(event) => setFinderState(event.target.value)} placeholder="FL" />
+          </label>
+          <button className="primary button-reset" disabled={finderLoading} onClick={findRealLeads}>
+            {finderLoading ? "Finding..." : "Find Real Leads"}
+          </button>
+        </div>
+        {finderMessage ? <p className="success">{finderMessage}</p> : null}
       </section>
 
       <section className="grid">
@@ -151,7 +200,7 @@ export default function Page() {
           {!loading && !leads.length ? (
             <div className="item">
               <strong>No leads yet</strong>
-              <p>Click Seed Test Leads to add the first database records.</p>
+              <p>Click Seed Test Leads or connect Places API and use Real Lead Finder.</p>
               <span className="badge">Empty</span>
             </div>
           ) : null}
@@ -159,6 +208,7 @@ export default function Page() {
             <div className="item" key={lead.id}>
               <strong>{lead.name}</strong>
               <p>{lead.niche} • {lead.city}, {lead.state}</p>
+              {lead.website ? <p>{lead.website}</p> : null}
               <span className="badge">Score {lead.score} • {lead.status}</span>
               <div className="item-actions">
                 <button className="secondary button-reset small" disabled={draftLoading} onClick={() => createDraft(lead.id)}>
