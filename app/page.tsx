@@ -27,6 +27,7 @@ export default function Page() {
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [draftLoading, setDraftLoading] = useState(false);
+  const [approvalLoading, setApprovalLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [error, setError] = useState("");
@@ -81,6 +82,25 @@ export default function Page() {
     }
   }
 
+  async function approveDraft(draftId: string) {
+    try {
+      setApprovalLoading(true);
+      setError("");
+      const res = await fetch("/api/outreach/drafts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftId, status: "APPROVED" })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Failed to approve draft");
+      await loadDrafts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve draft");
+    } finally {
+      setApprovalLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadLeads();
     loadDrafts();
@@ -91,10 +111,12 @@ export default function Page() {
     return Math.round(leads.reduce((sum, lead) => sum + lead.score, 0) / leads.length);
   }, [leads]);
 
+  const approvedDrafts = useMemo(() => drafts.filter((draft) => draft.status === "APPROVED").length, [drafts]);
+
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.2 Live DB + Drafts</div>
+        <div className="kicker">AutoHQ • v0.3 Draft Approval</div>
         <h1>Good Morning Gregory</h1>
         <p>Start the daily outreach workflow from one dashboard.</p>
         <div className="actions">
@@ -107,7 +129,7 @@ export default function Page() {
         </div>
         <p>
           {started
-            ? `${leads.length} database leads loaded. ${drafts.length} outreach drafts created. No emails sent without approval.`
+            ? `${leads.length} database leads loaded. ${drafts.length} outreach drafts created. ${approvedDrafts} approved. No emails sent without approval.`
             : loading
               ? "Loading database leads..."
               : "Waiting to start."}
@@ -119,7 +141,7 @@ export default function Page() {
         <div className="card"><span>Leads</span><strong>{leads.length}</strong></div>
         <div className="card"><span>Avg Score</span><strong>{averageScore}</strong></div>
         <div className="card"><span>Drafts</span><strong>{drafts.length}</strong></div>
-        <div className="card"><span>Approval</span><strong>ON</strong></div>
+        <div className="card"><span>Approved</span><strong>{approvedDrafts}</strong></div>
       </section>
 
       <section className="board">
@@ -159,7 +181,14 @@ export default function Page() {
             <div className="item" key={draft.id}>
               <strong>{draft.subject}</strong>
               <p>{draft.lead?.name || "Lead"} • {draft.status}</p>
-              <span className="badge">Saved Draft</span>
+              <pre>{draft.body}</pre>
+              {draft.status === "DRAFT" ? (
+                <button className="secondary button-reset small" disabled={approvalLoading} onClick={() => approveDraft(draft.id)}>
+                  Approve Draft
+                </button>
+              ) : (
+                <span className="badge">Approved</span>
+              )}
             </div>
           ))}
         </div>
