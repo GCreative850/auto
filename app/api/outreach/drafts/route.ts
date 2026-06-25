@@ -76,3 +76,37 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const { draftId, status } = await request.json();
+
+    if (!draftId) {
+      return NextResponse.json({ ok: false, error: "draftId is required" }, { status: 400 });
+    }
+
+    if (status !== "APPROVED") {
+      return NextResponse.json({ ok: false, error: "Only APPROVED status is supported right now" }, { status: 400 });
+    }
+
+    const draft = await prisma.outreachDraft.update({
+      where: { id: draftId },
+      data: { status: "APPROVED" },
+      include: { lead: true }
+    });
+
+    await prisma.aiActivityLog.create({
+      data: {
+        title: "Outreach draft approved",
+        detail: `Approved outreach draft for ${draft.lead.name}`
+      }
+    });
+
+    return NextResponse.json({ ok: true, draft });
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
