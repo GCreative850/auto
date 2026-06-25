@@ -31,7 +31,8 @@ button:disabled {
   opacity: 0.6;
 }
 
-input {
+input,
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -39,6 +40,11 @@ input {
   color: var(--text);
   padding: 12px 14px;
   font: inherit;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 label {
@@ -150,6 +156,14 @@ p {
   grid-template-columns: 2fr 2fr 1fr auto;
   gap: 12px;
   align-items: end;
+}
+
+.manual-import {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 
 .grid {
