@@ -31,6 +31,36 @@ button:disabled {
   opacity: 0.6;
 }
 
+input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+pre {
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.22);
+  color: var(--muted);
+  padding: 12px;
+  line-height: 1.5;
+}
+
 .container {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -106,6 +136,22 @@ p {
   font-weight: 800;
 }
 
+.success {
+  color: var(--good);
+  font-weight: 800;
+}
+
+.finder-card {
+  margin-top: 14px;
+}
+
+.finder-form {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -163,7 +209,8 @@ p {
 
 @media (max-width: 760px) {
   .grid,
-  .board {
+  .board,
+  .finder-form {
     grid-template-columns: 1fr;
   }
 
