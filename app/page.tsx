@@ -29,10 +29,12 @@ export default function Page() {
   const [draftLoading, setDraftLoading] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [finderLoading, setFinderLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
   const [finderNiche, setFinderNiche] = useState("Med Spa");
   const [finderCity, setFinderCity] = useState("Pensacola");
   const [finderState, setFinderState] = useState("FL");
   const [finderMessage, setFinderMessage] = useState("");
+  const [manualImportText, setManualImportText] = useState("Emerald Coast Detailing | Mobile Detailing | Pensacola | FL | | https://example.com | 82");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [error, setError] = useState("");
@@ -89,6 +91,27 @@ export default function Page() {
     }
   }
 
+  async function importManualLeads() {
+    try {
+      setImportLoading(true);
+      setFinderMessage("");
+      setError("");
+      const res = await fetch("/api/leads/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: manualImportText, niche: finderNiche, city: finderCity, state: finderState })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Manual import failed");
+      setFinderMessage(`Manual import added ${data.importedCount} leads. Skipped ${data.skippedCount} duplicates.`);
+      await loadLeads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Manual import failed");
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
   async function createDraft(leadId: string) {
     try {
       setDraftLoading(true);
@@ -142,9 +165,9 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.4 Real Lead Finder</div>
+        <div className="kicker">AutoHQ • v0.5 Manual Lead Import</div>
         <h1>Good Morning Gregory</h1>
-        <p>Find real businesses, create safe outreach drafts, approve them, then connect Gmail later.</p>
+        <p>Import real businesses, create safe outreach drafts, approve them, then connect Gmail later.</p>
         <div className="actions">
           <button className="primary" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
@@ -165,7 +188,7 @@ export default function Page() {
 
       <section className="card finder-card">
         <h2>Real Lead Finder</h2>
-        <p>Search real businesses by niche and city. Requires GOOGLE_PLACES_API_KEY in Vercel.</p>
+        <p>Google search requires an API key. Manual import works now without Google.</p>
         <div className="finder-form">
           <label>
             Niche
@@ -180,7 +203,17 @@ export default function Page() {
             <input value={finderState} onChange={(event) => setFinderState(event.target.value)} placeholder="FL" />
           </label>
           <button className="primary button-reset" disabled={finderLoading} onClick={findRealLeads}>
-            {finderLoading ? "Finding..." : "Find Real Leads"}
+            {finderLoading ? "Finding..." : "Find With Google"}
+          </button>
+        </div>
+        <div className="manual-import">
+          <label>
+            Manual Real Lead Import
+            <textarea value={manualImportText} onChange={(event) => setManualImportText(event.target.value)} />
+          </label>
+          <p>Format per line: Business Name | Niche | City | State | Email | Website | Score</p>
+          <button className="secondary button-reset" disabled={importLoading} onClick={importManualLeads}>
+            {importLoading ? "Importing..." : "Import Manual Leads"}
           </button>
         </div>
         {finderMessage ? <p className="success">{finderMessage}</p> : null}
@@ -200,7 +233,7 @@ export default function Page() {
           {!loading && !leads.length ? (
             <div className="item">
               <strong>No leads yet</strong>
-              <p>Click Seed Test Leads or connect Places API and use Real Lead Finder.</p>
+              <p>Click Seed Test Leads or paste real businesses in Manual Real Lead Import.</p>
               <span className="badge">Empty</span>
             </div>
           ) : null}
@@ -208,6 +241,7 @@ export default function Page() {
             <div className="item" key={lead.id}>
               <strong>{lead.name}</strong>
               <p>{lead.niche} • {lead.city}, {lead.state}</p>
+              {lead.email ? <p>{lead.email}</p> : null}
               {lead.website ? <p>{lead.website}</p> : null}
               <span className="badge">Score {lead.score} • {lead.status}</span>
               <div className="item-actions">
