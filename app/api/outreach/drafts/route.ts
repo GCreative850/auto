@@ -35,10 +35,12 @@ async function createDraftForLead(lead: {
     include: { lead: true }
   });
 
-  await prisma.lead.update({
-    where: { id: lead.id },
-    data: { status: lead.status === "NEW" ? "CONTACTED" : lead.status }
-  });
+  if (lead.status === "NEW") {
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { status: "CONTACTED" }
+    });
+  }
 
   return draft;
 }
