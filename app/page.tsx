@@ -30,6 +30,7 @@ export default function Page() {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [finderLoading, setFinderLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [finderNiche, setFinderNiche] = useState("Med Spa");
   const [finderCity, setFinderCity] = useState("Pensacola");
   const [finderState, setFinderState] = useState("FL");
@@ -88,6 +89,27 @@ export default function Page() {
       setError(err instanceof Error ? err.message : "Lead finder failed");
     } finally {
       setFinderLoading(false);
+    }
+  }
+
+  async function enrichEmails() {
+    try {
+      setEmailLoading(true);
+      setFinderMessage("");
+      setError("");
+      const res = await fetch("/api/leads/enrich-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 10 })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Email enrichment failed");
+      setFinderMessage(`Checked ${data.checkedCount} websites and found ${data.updatedCount} emails.`);
+      await loadLeads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Email enrichment failed");
+    } finally {
+      setEmailLoading(false);
     }
   }
 
@@ -161,13 +183,14 @@ export default function Page() {
   }, [leads]);
 
   const approvedDrafts = useMemo(() => drafts.filter((draft) => draft.status === "APPROVED").length, [drafts]);
+  const leadsWithEmail = useMemo(() => leads.filter((lead) => Boolean(lead.email)).length, [leads]);
 
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.5.1 Fresh Deploy</div>
+        <div className="kicker">AutoHQ • v0.6 Email Finder</div>
         <h1>Good Morning Gregory</h1>
-        <p>Import real businesses, create safe outreach drafts, approve them, then connect Gmail later.</p>
+        <p>Find businesses, enrich contact emails, create outreach drafts, approve them, then connect Gmail.</p>
         <div className="actions">
           <button className="primary" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
@@ -178,7 +201,7 @@ export default function Page() {
         </div>
         <p>
           {started
-            ? `${leads.length} leads loaded. ${drafts.length} outreach drafts created. ${approvedDrafts} approved. No emails sent without approval.`
+            ? `${leads.length} leads loaded. ${leadsWithEmail} emails found. ${drafts.length} drafts created. ${approvedDrafts} approved.`
             : loading
               ? "Loading database leads..."
               : "Waiting to start."}
@@ -188,7 +211,7 @@ export default function Page() {
 
       <section className="card finder-card">
         <h2>Real Lead Finder</h2>
-        <p>Google search requires an API key. Manual import works now without Google.</p>
+        <p>Use Google to find businesses, then scan their websites for public contact emails.</p>
         <div className="finder-form">
           <label>
             Niche
@@ -206,6 +229,11 @@ export default function Page() {
             {finderLoading ? "Finding..." : "Find With Google"}
           </button>
         </div>
+        <div className="actions enrichment-actions">
+          <button className="secondary button-reset" disabled={emailLoading} onClick={enrichEmails}>
+            {emailLoading ? "Finding Emails..." : "Find Contact Emails"}
+          </button>
+        </div>
         <div className="manual-import">
           <label>
             Manual Real Lead Import
@@ -221,7 +249,7 @@ export default function Page() {
 
       <section className="grid">
         <div className="card"><span>Leads</span><strong>{leads.length}</strong></div>
-        <div className="card"><span>Avg Score</span><strong>{averageScore}</strong></div>
+        <div className="card"><span>Emails</span><strong>{leadsWithEmail}</strong></div>
         <div className="card"><span>Drafts</span><strong>{drafts.length}</strong></div>
         <div className="card"><span>Approved</span><strong>{approvedDrafts}</strong></div>
       </section>
@@ -233,7 +261,7 @@ export default function Page() {
           {!loading && !leads.length ? (
             <div className="item">
               <strong>No leads yet</strong>
-              <p>Click Seed Test Leads or paste real businesses in Manual Real Lead Import.</p>
+              <p>Click Find With Google to import real businesses.</p>
               <span className="badge">Empty</span>
             </div>
           ) : null}
@@ -241,7 +269,7 @@ export default function Page() {
             <div className="item" key={lead.id}>
               <strong>{lead.name}</strong>
               <p>{lead.niche} • {lead.city}, {lead.state}</p>
-              {lead.email ? <p>{lead.email}</p> : null}
+              {lead.email ? <p>{lead.email}</p> : <p>No email found yet</p>}
               {lead.website ? <p>{lead.website}</p> : null}
               <span className="badge">Score {lead.score} • {lead.status}</span>
               <div className="item-actions">
