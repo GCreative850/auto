@@ -11,7 +11,25 @@ type ManualLead = {
   score?: number;
 };
 
-function normalizeLead(input: ManualLead) {
+type ParsedLead = {
+  name: string;
+  niche: string;
+  city: string;
+  state: string;
+  email: string | null;
+  website: string | null;
+  score: number;
+};
+
+type ImportBody = {
+  text?: string;
+  niche?: string;
+  city?: string;
+  state?: string;
+  leads?: ManualLead[];
+};
+
+function normalizeLead(input: ManualLead): ParsedLead {
   return {
     name: String(input.name || "").trim(),
     niche: String(input.niche || "Local Business").trim(),
@@ -23,8 +41,8 @@ function normalizeLead(input: ManualLead) {
   };
 }
 
-function parseLine(line: string, fallback: { niche: string; city: string; state: string }) {
-  const parts = line.split("|").map((part) => part.trim());
+function parseLine(line: string, fallback: { niche: string; city: string; state: string }): ParsedLead {
+  const parts = line.split("|").map((part: string) => part.trim());
   return normalizeLead({
     name: parts[0],
     niche: parts[1] || fallback.niche,
@@ -38,26 +56,26 @@ function parseLine(line: string, fallback: { niche: string; city: string; state:
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as ImportBody;
     const fallback = {
       niche: String(body.niche || "Local Business").trim(),
       city: String(body.city || "Pensacola").trim(),
       state: String(body.state || "FL").trim()
     };
 
-    const parsedLeads = Array.isArray(body.leads)
-      ? body.leads.map(normalizeLead)
+    const parsedLeads: ParsedLead[] = Array.isArray(body.leads)
+      ? body.leads.map((item: ManualLead) => normalizeLead(item))
       : String(body.text || "")
           .split("\n")
-          .map((line) => line.trim())
+          .map((line: string) => line.trim())
           .filter(Boolean)
-          .map((line) => parseLine(line, fallback));
+          .map((line: string) => parseLine(line, fallback));
 
-    const validLeads = parsedLeads.filter((lead) => lead.name.length > 1);
+    const validLeads = parsedLeads.filter((lead: ParsedLead) => lead.name.length > 1);
 
     if (!validLeads.length) {
       return NextResponse.json(
-        { ok: false, error: "Paste at least one lead. Format: Name | Niche | City | State | Email | Website | Score" },
+        { ok: false, error: "Paste at least one lead." },
         { status: 400 }
       );
     }
