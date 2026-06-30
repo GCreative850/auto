@@ -165,7 +165,7 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.5 Manual Lead Import</div>
+        <div className="kicker">AutoHQ • v0.5.1 Fresh Deploy</div>
         <h1>Good Morning Gregory</h1>
         <p>Import real businesses, create safe outreach drafts, approve them, then connect Gmail later.</p>
         <div className="actions">
