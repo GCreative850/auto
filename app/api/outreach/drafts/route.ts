@@ -141,20 +141,27 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "draftId is required" }, { status: 400 });
     }
 
-    if (status !== "APPROVED") {
-      return NextResponse.json({ ok: false, error: "Only APPROVED status is supported right now" }, { status: 400 });
+    if (status !== "APPROVED" && status !== "SENT") {
+      return NextResponse.json({ ok: false, error: "Only APPROVED or SENT status is supported right now" }, { status: 400 });
     }
 
     const draft = await prisma.outreachDraft.update({
       where: { id: draftId },
-      data: { status: "APPROVED" },
+      data: { status },
       include: { lead: true }
     });
 
+    if (status === "SENT") {
+      await prisma.lead.update({
+        where: { id: draft.leadId },
+        data: { status: "CONTACTED" }
+      });
+    }
+
     await prisma.aiActivityLog.create({
       data: {
-        title: "Outreach draft approved",
-        detail: `Approved outreach draft for ${draft.lead.name}`
+        title: status === "SENT" ? "Outreach marked sent" : "Outreach draft approved",
+        detail: `${status === "SENT" ? "Marked sent" : "Approved outreach draft"} for ${draft.lead.name}`
       }
     });
 
