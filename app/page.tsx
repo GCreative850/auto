@@ -188,15 +188,16 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.6 Email Finder</div>
+        <div className="kicker">AutoHQ • v0.8 Gmail Integrated</div>
         <h1>Good Morning Gregory</h1>
-        <p>Find businesses, enrich contact emails, create outreach drafts, approve them, then connect Gmail.</p>
+        <p>Find businesses, enrich contact emails, create outreach drafts, approve them, then open Gmail drafts from inside AutoHQ.</p>
         <div className="actions">
           <button className="primary" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
           </button>
           <button className="secondary button-reset" onClick={loadLeads}>Refresh Leads</button>
           <button className="secondary button-reset" onClick={seedLeads}>Seed Test Leads</button>
+          <a className="secondary" href="/gmail-drafts">Gmail Drafts</a>
           <a className="secondary" href="/api/health">Health Check</a>
         </div>
         <p>
@@ -299,7 +300,7 @@ export default function Page() {
                   Approve Draft
                 </button>
               ) : (
-                <span className="badge">Approved</span>
+                <a className="secondary small" href="/gmail-drafts">Open Gmail Drafts</a>
               )}
             </div>
           ))}
