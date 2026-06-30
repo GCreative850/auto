@@ -16,22 +16,33 @@ type Draft = {
 };
 
 function gmailUrl(draft: Draft) {
-  const to = draft.lead?.email || "";
   const params = new URLSearchParams({
     view: "cm",
     fs: "1",
-    to,
+    tf: "1",
+    to: draft.lead?.email || "",
     su: draft.subject,
     body: draft.body
   });
 
-  return `https://mail.google.com/mail/?${params.toString()}`;
+  return `https://mail.google.com/mail/u/0/?${params.toString()}`;
+}
+
+function mailtoUrl(draft: Draft) {
+  const to = draft.lead?.email || "";
+  const params = new URLSearchParams({
+    subject: draft.subject,
+    body: draft.body
+  });
+
+  return `mailto:${to}?${params.toString()}`;
 }
 
 export default function GmailDraftsPage() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState("");
 
   async function loadDrafts() {
     try {
@@ -48,6 +59,12 @@ export default function GmailDraftsPage() {
     }
   }
 
+  async function copyDraft(draft: Draft) {
+    const text = `To: ${draft.lead?.email || ""}\nSubject: ${draft.subject}\n\n${draft.body}`;
+    await navigator.clipboard.writeText(text);
+    setCopied(draft.id);
+  }
+
   useEffect(() => {
     loadDrafts();
   }, []);
@@ -57,7 +74,7 @@ export default function GmailDraftsPage() {
       <section className="hero">
         <div className="kicker">AutoHQ Gmail Drafts</div>
         <h1>Approved Drafts to Gmail</h1>
-        <p>Open approved outreach drafts in Gmail with the recipient, subject, and body already filled in. You still review before sending.</p>
+        <p>Open approved outreach drafts in Gmail, open your mail app, or copy the full draft if Google sends you to Workspace.</p>
         <div className="actions">
           <a className="secondary" href="/">Back to AutoHQ</a>
           <button className="secondary button-reset" onClick={loadDrafts}>Refresh Drafts</button>
@@ -81,8 +98,14 @@ export default function GmailDraftsPage() {
             <pre>{draft.body}</pre>
             <div className="item-actions">
               <a className="secondary small" href={gmailUrl(draft)} target="_blank" rel="noreferrer">
-                Open Gmail Draft
+                Open Gmail
               </a>
+              <a className="secondary small" href={mailtoUrl(draft)}>
+                Open Mail App
+              </a>
+              <button className="secondary button-reset small" onClick={() => copyDraft(draft)}>
+                {copied === draft.id ? "Copied" : "Copy Draft"}
+              </button>
             </div>
           </div>
         ))}
