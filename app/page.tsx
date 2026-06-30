@@ -23,6 +23,18 @@ type OutreachDraft = {
   lead?: Lead;
 };
 
+function gmailComposeUrl(draft: OutreachDraft) {
+  const params = new URLSearchParams({
+    view: "cm",
+    fs: "1",
+    to: draft.lead?.email || "",
+    su: draft.subject,
+    body: draft.body
+  });
+
+  return `https://mail.google.com/mail/?${params.toString()}`;
+}
+
 export default function Page() {
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,6 +43,8 @@ export default function Page() {
   const [finderLoading, setFinderLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [bulkDraftLoading, setBulkDraftLoading] = useState(false);
+  const [autoRunLoading, setAutoRunLoading] = useState(false);
   const [finderNiche, setFinderNiche] = useState("Med Spa");
   const [finderCity, setFinderCity] = useState("Pensacola");
   const [finderState, setFinderState] = useState("FL");
@@ -64,6 +78,10 @@ export default function Page() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load drafts");
     }
+  }
+
+  async function refreshAll() {
+    await Promise.all([loadLeads(), loadDrafts()]);
   }
 
   async function seedLeads() {
@@ -113,6 +131,69 @@ export default function Page() {
     }
   }
 
+  async function createBulkDrafts() {
+    try {
+      setBulkDraftLoading(true);
+      setFinderMessage("");
+      setError("");
+      const res = await fetch("/api/outreach/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bulk: true })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Bulk draft creation failed");
+      setFinderMessage(`Created ${data.createdCount} new drafts for email-ready leads.`);
+      await refreshAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk draft creation failed");
+    } finally {
+      setBulkDraftLoading(false);
+    }
+  }
+
+  async function autoRunDay() {
+    try {
+      setAutoRunLoading(true);
+      setStarted(true);
+      setFinderMessage("Running Auto Day: finding leads...");
+      setError("");
+
+      const leadRes = await fetch("/api/leads/find", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche: finderNiche, city: finderCity, state: finderState })
+      });
+      const leadData = await leadRes.json();
+      if (!leadRes.ok || !leadData.ok) throw new Error(leadData.error || "Lead finder failed");
+
+      setFinderMessage("Running Auto Day: finding emails...");
+      const emailRes = await fetch("/api/leads/enrich-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 10 })
+      });
+      const emailData = await emailRes.json();
+      if (!emailRes.ok || !emailData.ok) throw new Error(emailData.error || "Email enrichment failed");
+
+      setFinderMessage("Running Auto Day: creating drafts...");
+      const draftRes = await fetch("/api/outreach/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bulk: true })
+      });
+      const draftData = await draftRes.json();
+      if (!draftRes.ok || !draftData.ok) throw new Error(draftData.error || "Bulk draft creation failed");
+
+      setFinderMessage(`Auto Day complete: ${leadData.importedCount} leads imported, ${emailData.updatedCount} emails found, ${draftData.createdCount} drafts created.`);
+      await refreshAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Auto Day failed");
+    } finally {
+      setAutoRunLoading(false);
+    }
+  }
+
   async function importManualLeads() {
     try {
       setImportLoading(true);
@@ -145,7 +226,7 @@ export default function Page() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Failed to create draft");
-      await Promise.all([loadLeads(), loadDrafts()]);
+      await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create draft");
     } finally {
@@ -173,14 +254,8 @@ export default function Page() {
   }
 
   useEffect(() => {
-    loadLeads();
-    loadDrafts();
+    refreshAll();
   }, []);
-
-  const averageScore = useMemo(() => {
-    if (!leads.length) return 0;
-    return Math.round(leads.reduce((sum, lead) => sum + lead.score, 0) / leads.length);
-  }, [leads]);
 
   const approvedDrafts = useMemo(() => drafts.filter((draft) => draft.status === "APPROVED").length, [drafts]);
   const leadsWithEmail = useMemo(() => leads.filter((lead) => Boolean(lead.email)).length, [leads]);
@@ -188,15 +263,17 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.8 Gmail Integrated</div>
+        <div className="kicker">AutoHQ • v0.9 Auto Run + Gmail</div>
         <h1>Good Morning Gregory</h1>
-        <p>Find businesses, enrich contact emails, create outreach drafts, approve them, then open Gmail drafts from inside AutoHQ.</p>
+        <p>Run the daily lead workflow, create drafts in bulk, approve them, then open Gmail drafts from inside AutoHQ.</p>
         <div className="actions">
-          <button className="primary" onClick={() => setStarted(true)}>
+          <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>
+            {autoRunLoading ? "Auto Running..." : "Auto Run Day"}
+          </button>
+          <button className="secondary button-reset" onClick={() => setStarted(true)}>
             {started ? "Workflow Started" : "Start Good Morning"}
           </button>
-          <button className="secondary button-reset" onClick={loadLeads}>Refresh Leads</button>
-          <button className="secondary button-reset" onClick={seedLeads}>Seed Test Leads</button>
+          <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
           <a className="secondary" href="/gmail-drafts">Gmail Drafts</a>
           <a className="secondary" href="/api/health">Health Check</a>
         </div>
@@ -212,7 +289,7 @@ export default function Page() {
 
       <section className="card finder-card">
         <h2>Real Lead Finder</h2>
-        <p>Use Google to find businesses, then scan their websites for public contact emails.</p>
+        <p>Use Google to find businesses, scan websites for public contact emails, then create drafts for all email-ready leads.</p>
         <div className="finder-form">
           <label>
             Niche
@@ -233,6 +310,9 @@ export default function Page() {
         <div className="actions enrichment-actions">
           <button className="secondary button-reset" disabled={emailLoading} onClick={enrichEmails}>
             {emailLoading ? "Finding Emails..." : "Find Contact Emails"}
+          </button>
+          <button className="secondary button-reset" disabled={bulkDraftLoading} onClick={createBulkDrafts}>
+            {bulkDraftLoading ? "Creating Drafts..." : "Create Drafts for All Email Leads"}
           </button>
         </div>
         <div className="manual-import">
@@ -262,7 +342,7 @@ export default function Page() {
           {!loading && !leads.length ? (
             <div className="item">
               <strong>No leads yet</strong>
-              <p>Click Find With Google to import real businesses.</p>
+              <p>Click Auto Run Day or Find With Google to import real businesses.</p>
               <span className="badge">Empty</span>
             </div>
           ) : null}
@@ -299,8 +379,13 @@ export default function Page() {
                 <button className="secondary button-reset small" disabled={approvalLoading} onClick={() => approveDraft(draft.id)}>
                   Approve Draft
                 </button>
+              ) : draft.lead?.email ? (
+                <div className="item-actions">
+                  <a className="secondary small" href={gmailComposeUrl(draft)} target="_blank" rel="noreferrer">Open Gmail Draft</a>
+                  <a className="secondary small" href="/gmail-drafts">All Gmail Drafts</a>
+                </div>
               ) : (
-                <a className="secondary small" href="/gmail-drafts">Open Gmail Drafts</a>
+                <span className="badge">Approved</span>
               )}
             </div>
           ))}
