@@ -27,12 +27,23 @@ function gmailComposeUrl(draft: OutreachDraft) {
   const params = new URLSearchParams({
     view: "cm",
     fs: "1",
+    tf: "1",
     to: draft.lead?.email || "",
     su: draft.subject,
     body: draft.body
   });
 
-  return `https://mail.google.com/mail/?${params.toString()}`;
+  return `https://mail.google.com/mail/u/0/?${params.toString()}`;
+}
+
+function mailtoUrl(draft: OutreachDraft) {
+  const to = draft.lead?.email || "";
+  const params = new URLSearchParams({
+    subject: draft.subject,
+    body: draft.body
+  });
+
+  return `mailto:${to}?${params.toString()}`;
 }
 
 export default function Page() {
@@ -45,6 +56,7 @@ export default function Page() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [bulkDraftLoading, setBulkDraftLoading] = useState(false);
   const [autoRunLoading, setAutoRunLoading] = useState(false);
+  const [copiedDraftId, setCopiedDraftId] = useState("");
   const [finderNiche, setFinderNiche] = useState("Med Spa");
   const [finderCity, setFinderCity] = useState("Pensacola");
   const [finderState, setFinderState] = useState("FL");
@@ -185,7 +197,7 @@ export default function Page() {
       const draftData = await draftRes.json();
       if (!draftRes.ok || !draftData.ok) throw new Error(draftData.error || "Bulk draft creation failed");
 
-      setFinderMessage(`Auto Day complete: ${leadData.importedCount} leads imported, ${emailData.updatedCount} emails found, ${draftData.createdCount} drafts created.`);
+      setFinderMessage(`Auto Day complete: ${leadData.importedCount} new leads, ${emailData.updatedCount} new emails, ${draftData.createdCount} new drafts. Existing approved drafts still count below.`);
       await refreshAll();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Auto Day failed");
@@ -253,19 +265,30 @@ export default function Page() {
     }
   }
 
+  async function copyDraft(draft: OutreachDraft) {
+    const text = `To: ${draft.lead?.email || ""}\nSubject: ${draft.subject}\n\n${draft.body}`;
+    await navigator.clipboard.writeText(text);
+    setCopiedDraftId(draft.id);
+    setFinderMessage("Draft copied. Paste it into Gmail if the Gmail button opens Workspace.");
+  }
+
   useEffect(() => {
     refreshAll();
   }, []);
 
   const approvedDrafts = useMemo(() => drafts.filter((draft) => draft.status === "APPROVED").length, [drafts]);
   const leadsWithEmail = useMemo(() => leads.filter((lead) => Boolean(lead.email)).length, [leads]);
+  const draftLeadCount = useMemo(() => new Set(drafts.map((draft) => draft.leadId)).size, [drafts]);
+  const draftEmailCount = useMemo(() => new Set(drafts.map((draft) => draft.lead?.email).filter((email): email is string => Boolean(email))).size, [drafts]);
+  const displayLeadCount = Math.max(leads.length, draftLeadCount);
+  const displayEmailCount = Math.max(leadsWithEmail, draftEmailCount);
 
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v0.9 Auto Run + Gmail</div>
+        <div className="kicker">AutoHQ • v1.0 Dashboard Fix</div>
         <h1>Good Morning Gregory</h1>
-        <p>Run the daily lead workflow, create drafts in bulk, approve them, then open Gmail drafts from inside AutoHQ.</p>
+        <p>Run the daily lead workflow, create drafts in bulk, approve them, then open or copy Gmail drafts from inside AutoHQ.</p>
         <div className="actions">
           <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>
             {autoRunLoading ? "Auto Running..." : "Auto Run Day"}
@@ -279,10 +302,10 @@ export default function Page() {
         </div>
         <p>
           {started
-            ? `${leads.length} leads loaded. ${leadsWithEmail} emails found. ${drafts.length} drafts created. ${approvedDrafts} approved.`
+            ? `${displayLeadCount} leads loaded. ${displayEmailCount} emails found. ${drafts.length} drafts created. ${approvedDrafts} approved.`
             : loading
               ? "Loading database leads..."
-              : "Waiting to start."}
+              : `${displayLeadCount} leads loaded. ${displayEmailCount} emails found. ${drafts.length} drafts created. ${approvedDrafts} approved.`}
         </p>
         {error ? <p className="error">{error}</p> : null}
       </section>
@@ -329,8 +352,8 @@ export default function Page() {
       </section>
 
       <section className="grid">
-        <div className="card"><span>Leads</span><strong>{leads.length}</strong></div>
-        <div className="card"><span>Emails</span><strong>{leadsWithEmail}</strong></div>
+        <div className="card"><span>Leads</span><strong>{displayLeadCount}</strong></div>
+        <div className="card"><span>Emails</span><strong>{displayEmailCount}</strong></div>
         <div className="card"><span>Drafts</span><strong>{drafts.length}</strong></div>
         <div className="card"><span>Approved</span><strong>{approvedDrafts}</strong></div>
       </section>
@@ -341,9 +364,9 @@ export default function Page() {
           {loading ? <div className="item">Loading leads...</div> : null}
           {!loading && !leads.length ? (
             <div className="item">
-              <strong>No leads yet</strong>
-              <p>Click Auto Run Day or Find With Google to import real businesses.</p>
-              <span className="badge">Empty</span>
+              <strong>No CRM lead rows loaded</strong>
+              <p>Your draft lead data is still counted in the dashboard. Click Refresh or run a new search to reload the CRM list.</p>
+              <span className="badge">Drafts Still Saved</span>
             </div>
           ) : null}
           {leads.map((lead) => (
@@ -381,8 +404,11 @@ export default function Page() {
                 </button>
               ) : draft.lead?.email ? (
                 <div className="item-actions">
-                  <a className="secondary small" href={gmailComposeUrl(draft)} target="_blank" rel="noreferrer">Open Gmail Draft</a>
-                  <a className="secondary small" href="/gmail-drafts">All Gmail Drafts</a>
+                  <a className="secondary small" href={gmailComposeUrl(draft)} target="_blank" rel="noreferrer">Open Gmail</a>
+                  <a className="secondary small" href={mailtoUrl(draft)}>Open Mail App</a>
+                  <button className="secondary button-reset small" onClick={() => copyDraft(draft)}>
+                    {copiedDraftId === draft.id ? "Copied" : "Copy Draft"}
+                  </button>
                 </div>
               ) : (
                 <span className="badge">Approved</span>
