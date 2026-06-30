@@ -14,6 +14,35 @@ function buildDraft(lead: {
   return { subject, body };
 }
 
+async function createDraftForLead(lead: {
+  id: string;
+  name: string;
+  niche: string;
+  city: string;
+  state: string;
+  website: string | null;
+  status: string;
+}) {
+  const draftContent = buildDraft(lead);
+
+  const draft = await prisma.outreachDraft.create({
+    data: {
+      leadId: lead.id,
+      subject: draftContent.subject,
+      body: draftContent.body,
+      status: "DRAFT"
+    },
+    include: { lead: true }
+  });
+
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: { status: lead.status === "NEW" ? "CONTACTED" : lead.status }
+  });
+
+  return draft;
+}
+
 export async function GET() {
   try {
     const drafts = await prisma.outreachDraft.findMany({
@@ -32,7 +61,41 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { leadId } = await request.json();
+    const body = await request.json();
+
+    if (body.bulk === true) {
+      const leads = await prisma.lead.findMany({
+        where: {
+          email: { not: null },
+          drafts: { none: {} }
+        },
+        orderBy: { createdAt: "desc" },
+        take: 25
+      });
+
+      const drafts = [];
+
+      for (const lead of leads) {
+        const draft = await createDraftForLead(lead);
+        drafts.push(draft);
+      }
+
+      await prisma.aiActivityLog.create({
+        data: {
+          title: "Bulk outreach drafts created",
+          detail: `Created ${drafts.length} outreach drafts for email-ready leads`
+        }
+      });
+
+      return NextResponse.json({
+        ok: true,
+        route: "outreach-drafts-bulk",
+        createdCount: drafts.length,
+        drafts
+      });
+    }
+
+    const { leadId } = body;
 
     if (!leadId) {
       return NextResponse.json({ ok: false, error: "leadId is required" }, { status: 400 });
@@ -44,22 +107,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Lead not found" }, { status: 404 });
     }
 
-    const draftContent = buildDraft(lead);
+    const existingDraft = await prisma.outreachDraft.findFirst({ where: { leadId: lead.id } });
 
-    const draft = await prisma.outreachDraft.create({
-      data: {
-        leadId: lead.id,
-        subject: draftContent.subject,
-        body: draftContent.body,
-        status: "DRAFT"
-      },
-      include: { lead: true }
-    });
+    if (existingDraft) {
+      return NextResponse.json({ ok: true, draft: existingDraft, skipped: true });
+    }
 
-    await prisma.lead.update({
-      where: { id: lead.id },
-      data: { status: lead.status === "NEW" ? "CONTACTED" : lead.status }
-    });
+    const draft = await createDraftForLead(lead);
 
     await prisma.aiActivityLog.create({
       data: {
