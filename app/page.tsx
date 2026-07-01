@@ -132,11 +132,9 @@ export default function Page() {
       setAutoRunLoading(true);
       setMessage("Running Auto Day...");
       setError("");
-
       await findRealLeads();
       await enrichEmails();
       await createBulkDrafts();
-
       setMessage("Auto Day complete. Review drafts, then use Pipeline.");
       await refreshAll();
     } catch (err) {
@@ -181,41 +179,29 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v1.1 Full Dashboard</div>
+        <div className="kicker">AutoHQ • v1.2 Inbox Tracker</div>
         <h1>Good Morning Gregory</h1>
-        <p>Everything is now connected here: leads, drafts, Gmail, pipeline, follow-ups, and deals.</p>
+        <p>Everything is connected here: leads, drafts, Gmail, pipeline, inbox, follow-ups, and deals.</p>
         <div className="actions">
-          <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>
-            {autoRunLoading ? "Auto Running..." : "Auto Run Day"}
-          </button>
+          <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>{autoRunLoading ? "Auto Running..." : "Auto Run Day"}</button>
           <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
           <a className="secondary" href="/pipeline">Pipeline</a>
+          <a className="secondary" href="/inbox">Reply Tracker</a>
           <a className="secondary" href="/followups">Follow-ups</a>
           <a className="secondary" href="/deals">Deals</a>
           <a className="secondary" href="/gmail-drafts">Gmail Drafts</a>
           <a className="secondary" href="/api/health">Health Check</a>
         </div>
-        <p>
-          {loading
-            ? "Loading dashboard..."
-            : `${displayLeadCount} leads. ${displayEmailCount} emails. ${drafts.length} drafts. ${approvedDrafts} approved. ${sentDrafts} sent.`}
-        </p>
+        <p>{loading ? "Loading dashboard..." : `${displayLeadCount} leads. ${displayEmailCount} emails. ${drafts.length} drafts. ${approvedDrafts} approved. ${sentDrafts} sent.`}</p>
         {error ? <p className="error">{error}</p> : message ? <p className="success">{message}</p> : null}
       </section>
 
       <section className="grid">
-        <a className="card" href="/">
-          <span>Step 1</span><strong>Find Leads</strong><p>Run Auto Day and create drafts.</p>
-        </a>
-        <a className="card" href="/pipeline">
-          <span>Step 2</span><strong>Pipeline</strong><p>Send approved drafts and mark sent.</p>
-        </a>
-        <a className="card" href="/followups">
-          <span>Step 3</span><strong>Follow-ups</strong><p>Create follow-up drafts.</p>
-        </a>
-        <a className="card" href="/deals">
-          <span>Step 4</span><strong>Deals</strong><p>Track interested, client, or lost.</p>
-        </a>
+        <a className="card" href="/"><span>Step 1</span><strong>Find Leads</strong><p>Run Auto Day and create drafts.</p></a>
+        <a className="card" href="/pipeline"><span>Step 2</span><strong>Pipeline</strong><p>Send approved drafts and mark sent.</p></a>
+        <a className="card" href="/inbox"><span>Step 3</span><strong>Reply Tracker</strong><p>Track replies and move leads.</p></a>
+        <a className="card" href="/followups"><span>Step 4</span><strong>Follow-ups</strong><p>Create follow-up drafts.</p></a>
+        <a className="card" href="/deals"><span>Step 5</span><strong>Deals</strong><p>Track interested, client, or archived.</p></a>
       </section>
 
       <section className="card finder-card">
@@ -244,34 +230,13 @@ export default function Page() {
         <div className="card">
           <h2>CRM Preview</h2>
           {loading ? <div className="item">Loading leads...</div> : null}
-          {!loading && !leads.length ? (
-            <div className="item"><strong>No CRM lead rows loaded</strong><p>Your draft lead data is still counted. Click Refresh or run a new search.</p><span className="badge">Drafts Still Saved</span></div>
-          ) : null}
-          {leads.map((lead) => (
-            <div className="item" key={lead.id}>
-              <strong>{lead.name}</strong>
-              <p>{lead.niche} • {lead.city}, {lead.state}</p>
-              <p>{lead.email || "No email found yet"}</p>
-              {lead.website ? <p>{lead.website}</p> : null}
-              <span className="badge">Score {lead.score} • {lead.status}</span>
-            </div>
-          ))}
+          {!loading && !leads.length ? <div className="item"><strong>No CRM lead rows loaded</strong><p>Your draft lead data is still counted. Click Refresh or run a new search.</p><span className="badge">Drafts Still Saved</span></div> : null}
+          {leads.map((lead) => <div className="item" key={lead.id}><strong>{lead.name}</strong><p>{lead.niche} • {lead.city}, {lead.state}</p><p>{lead.email || "No email found yet"}</p>{lead.website ? <p>{lead.website}</p> : null}<span className="badge">Score {lead.score} • {lead.status}</span></div>)}
         </div>
-
         <div className="card">
           <h2>Draft Review</h2>
           {!drafts.length ? <div className="item"><strong>No drafts yet</strong><p>Run Auto Day or create drafts for email leads.</p></div> : null}
-          {drafts.map((draft) => (
-            <div className="item" key={draft.id}>
-              <strong>{draft.subject}</strong>
-              <p>{draft.lead?.name || "Lead"} • {draft.status}</p>
-              {draft.status === "DRAFT" ? (
-                <button className="secondary button-reset small" disabled={approvalLoading} onClick={() => approveDraft(draft.id)}>Approve Draft</button>
-              ) : (
-                <span className="badge">{draft.status}</span>
-              )}
-            </div>
-          ))}
+          {drafts.map((draft) => <div className="item" key={draft.id}><strong>{draft.subject}</strong><p>{draft.lead?.name || "Lead"} • {draft.status}</p>{draft.status === "DRAFT" ? <button className="secondary button-reset small" disabled={approvalLoading} onClick={() => approveDraft(draft.id)}>Approve Draft</button> : <span className="badge">{draft.status}</span>}</div>)}
         </div>
       </section>
     </main>
