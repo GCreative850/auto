@@ -10,6 +10,7 @@ type Check = {
 export default function GmailSyncPage() {
   const [checks, setChecks] = useState<Check[]>([]);
   const [connected, setConnected] = useState(false);
+  const [oauthReady, setOauthReady] = useState(false);
   const [nextStep, setNextStep] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,6 +24,7 @@ export default function GmailSyncPage() {
       if (!res.ok || !data.ok) throw new Error(data.error || "Could not load Gmail sync status");
       setChecks(data.checks || []);
       setConnected(Boolean(data.connected));
+      setOauthReady(Boolean(data.oauthReady));
       setNextStep(data.nextStep || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load Gmail sync status");
@@ -44,13 +46,14 @@ export default function GmailSyncPage() {
         <div className="actions">
           <a className="secondary" href="/">Dashboard</a>
           <a className="secondary" href="/inbox">Reply Tracker</a>
+          {oauthReady && !connected ? <a className="primary" href="/api/gmail-sync/connect">Connect Gmail</a> : null}
           <button className="secondary button-reset" onClick={loadStatus}>Refresh Status</button>
         </div>
         {error ? <p className="error">{error}</p> : null}
       </section>
 
       <section className="grid">
-        <div className="card"><span>Status</span><strong>{loading ? "Checking" : connected ? "Connected" : "Missing Keys"}</strong></div>
+        <div className="card"><span>Status</span><strong>{loading ? "Checking" : connected ? "Connected" : oauthReady ? "Ready to Connect" : "Missing Keys"}</strong></div>
         <div className="card"><span>Mode</span><strong>Safe Setup</strong></div>
         <div className="card"><span>Reply Board</span><strong>Ready</strong></div>
         <div className="card"><span>Auto Scan</span><strong>{connected ? "Next" : "Locked"}</strong></div>
@@ -69,10 +72,10 @@ export default function GmailSyncPage() {
       </section>
 
       <section className="card">
-        <h2>What this unlocks next</h2>
-        <div className="item"><strong>Reply detection</strong><p>AutoHQ can search sent outreach subjects and matching business emails.</p></div>
-        <div className="item"><strong>Suggested response</strong><p>When someone replies, AutoHQ can create a response draft instead of sending automatically.</p></div>
-        <div className="item"><strong>Lead movement</strong><p>Positive replies can be moved to Interested and then Deals.</p></div>
+        <h2>How to finish</h2>
+        <div className="item"><strong>Step 1</strong><p>Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in Vercel.</p></div>
+        <div className="item"><strong>Step 2</strong><p>Redeploy, then click Connect Gmail on this page.</p></div>
+        <div className="item"><strong>Step 3</strong><p>Copy the refresh token into Vercel as GMAIL_REFRESH_TOKEN and redeploy again.</p></div>
       </section>
     </main>
   );
