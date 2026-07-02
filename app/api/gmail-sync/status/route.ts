@@ -13,14 +13,22 @@ export async function GET() {
     configured: Boolean(process.env[name])
   }));
 
+  const oauthReady = Boolean(
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_REDIRECT_URI
+  );
   const connected = checks.every((item) => item.configured);
 
   return NextResponse.json({
     ok: true,
     connected,
+    oauthReady,
     checks,
     nextStep: connected
       ? "Gmail sync credentials are configured. Reply scanning can be enabled next."
-      : "Add the missing Gmail OAuth environment variables in Vercel, then redeploy."
+      : oauthReady
+        ? "Click Connect Gmail to generate GMAIL_REFRESH_TOKEN."
+        : "Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in Vercel, then redeploy."
   });
 }
