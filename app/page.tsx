@@ -179,10 +179,11 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v1.4 Next Messages</div>
+        <div className="kicker">AutoHQ • v1.5 Command Center</div>
         <h1>Good Morning Gregory</h1>
-        <p>Everything is connected here: leads, drafts, Gmail scan, pipeline, inbox, next messages, follow-ups, and deals.</p>
+        <p>Everything is connected here: command center, leads, drafts, Gmail scan, pipeline, inbox, next messages, follow-ups, and deals.</p>
         <div className="actions">
+          <a className="primary" href="/command-center">Command Center</a>
           <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>{autoRunLoading ? "Auto Running..." : "Auto Run Day"}</button>
           <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
           <a className="secondary" href="/gmail-sync">Gmail Sync</a>
@@ -192,13 +193,13 @@ export default function Page() {
           <a className="secondary" href="/followups">Follow-ups</a>
           <a className="secondary" href="/deals">Deals</a>
           <a className="secondary" href="/gmail-drafts">Gmail Drafts</a>
-          <a className="secondary" href="/api/health">Health Check</a>
         </div>
         <p>{loading ? "Loading dashboard..." : `${displayLeadCount} leads. ${displayEmailCount} emails. ${drafts.length} drafts. ${approvedDrafts} approved. ${sentDrafts} sent.`}</p>
         {error ? <p className="error">{error}</p> : message ? <p className="success">{message}</p> : null}
       </section>
 
       <section className="grid">
+        <a className="card" href="/command-center"><span>Daily</span><strong>Command Center</strong><p>Start here every morning.</p></a>
         <a className="card" href="/"><span>Step 1</span><strong>Find Leads</strong><p>Run Auto Day and create drafts.</p></a>
         <a className="card" href="/pipeline"><span>Step 2</span><strong>Pipeline</strong><p>Send approved drafts and mark sent.</p></a>
         <a className="card" href="/inbox"><span>Step 3</span><strong>Reply Tracker</strong><p>Track replies and move leads.</p></a>
