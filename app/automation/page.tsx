@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type StepResult = {
   ok: boolean;
@@ -17,6 +17,16 @@ export default function AutomationPage() {
   const [city, setCity] = useState("Pensacola");
   const [state, setState] = useState("FL");
   const [limit, setLimit] = useState("10");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextNiche = params.get("niche");
+    const nextCity = params.get("city");
+    const nextState = params.get("state");
+    if (nextNiche) setNiche(nextNiche);
+    if (nextCity) setCity(nextCity);
+    if (nextState) setState(nextState);
+  }, []);
 
   async function runNow() {
     try {
@@ -47,6 +57,7 @@ export default function AutomationPage() {
         <p>Run lead search, email finding, draft creation, and Gmail reply scan. Sending stays manual.</p>
         <div className="actions">
           <a className="secondary" href="/">Dashboard</a>
+          <a className="secondary" href="/broad">Broad Markets</a>
           <a className="secondary" href="/status">Status</a>
           <a className="secondary" href="/command-center">Command Center</a>
           <button className="primary button-reset" disabled={loading} onClick={runNow}>{loading ? "Running..." : "Run Automation Now"}</button>
