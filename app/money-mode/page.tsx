@@ -34,6 +34,7 @@ export default function MoneyModePage() {
         <p>Use this page to turn AutoHQ leads into paid intro work today.</p>
         <div className="actions">
           <a className="secondary" href="/">Dashboard</a>
+          <a className="primary" href="/package">Business Package</a>
           <a className="secondary" href="/broad">Broad Markets</a>
           <a className="secondary" href="/send-queue">Send Queue</a>
           <a className="secondary" href="/deals">Deals</a>
