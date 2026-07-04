@@ -1,6 +1,6 @@
-const samplePay = process.env.NEXT_PUBLIC_PAY_SAMPLE_URL || "";
-const growthPay = process.env.NEXT_PUBLIC_PAY_GROWTH_URL || "";
-const monthlyPay = process.env.NEXT_PUBLIC_PAY_MONTHLY_URL || "";
+const samplePay = process.env.NEXT_PUBLIC_PAY_SAMPLE_URL || "https://cash.app/$ZZZaccheus";
+const growthPay = process.env.NEXT_PUBLIC_PAY_GROWTH_URL || "https://cash.app/$ZZZaccheus";
+const monthlyPay = process.env.NEXT_PUBLIC_PAY_MONTHLY_URL || "https://cash.app/$ZZZaccheus";
 
 const packages = [
   { name: "Sample Starter", price: "$49", link: samplePay, detail: "One short promo concept, caption, and call-to-action." },
@@ -27,11 +27,7 @@ export default function PayPage() {
             <span>{item.name}</span>
             <strong>{item.price}</strong>
             <p>{item.detail}</p>
-            {item.link ? (
-              <a className="primary small" href={item.link}>Pay {item.price}</a>
-            ) : (
-              <p>Payment link pending.</p>
-            )}
+            <a className="primary small" href={item.link}>Pay {item.price}</a>
           </div>
         ))}
       </section>
