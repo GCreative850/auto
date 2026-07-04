@@ -24,8 +24,8 @@ export default function AutoRunPage() {
 
   const sendCommand = useMemo(() => {
     const count = result?.results?.drafts?.createdCount || limit;
-    return `AutoHQ ran ${niche} in ${city}, ${state} and created drafts. Send the next ${count} Gmail drafts now. If one blocks, keep retrying one-by-one until the draft queue is clear.`;
-  }, [city, limit, niche, result, state]);
+    return `Send the next ${count} Gmail drafts now. Keep trying one-by-one until they are sent. If a draft blocks, retry it after sending the others, then tell me exactly how many sent and who replied.`;
+  }, [limit, result]);
 
   async function runAuto() {
     try {
@@ -40,7 +40,15 @@ export default function AutoRunPage() {
       const data = await res.json();
       setResult(data);
       if (!res.ok || !data.ok) throw new Error(data.error || "Auto Run failed");
-      setMessage("Auto Run finished. Copy the ChatGPT send command and paste it back into ChatGPT.");
+      setMessage("Auto Run finished. The send command is ready below.");
+      setTimeout(async () => {
+        try {
+          await navigator.clipboard.writeText(sendCommand);
+          setMessage("Auto Run finished and copied the send command. Paste it into ChatGPT.");
+        } catch {
+          setMessage("Auto Run finished. Tap Copy Send Command and paste it into ChatGPT.");
+        }
+      }, 250);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Auto Run failed");
     } finally {
@@ -58,7 +66,7 @@ export default function AutoRunPage() {
       <section className="hero">
         <div className="kicker">AutoHQ Auto Run</div>
         <h1>One-Click Outreach Run</h1>
-        <p>Runs the workflow, creates drafts, checks replies, then gives you the command to send through ChatGPT.</p>
+        <p>Runs lead finding, email enrichment, draft creation, reply checking, then prepares the ChatGPT send command.</p>
         <div className="actions">
           <a className="secondary" href="/command-center">Command Center</a>
           <a className="secondary" href="/send-queue">Send Queue</a>
@@ -81,7 +89,7 @@ export default function AutoRunPage() {
         <div className="card"><span>Step 1</span><strong>Find Leads</strong><p>Runs Places lead search.</p></div>
         <div className="card"><span>Step 2</span><strong>Find Emails</strong><p>Enriches websites into email-ready leads.</p></div>
         <div className="card"><span>Step 3</span><strong>Create Drafts</strong><p>Makes Gmail-ready outreach drafts.</p></div>
-        <div className="card"><span>Step 4</span><strong>Talk Back</strong><p>Copy one command back to ChatGPT to send.</p></div>
+        <div className="card"><span>Step 4</span><strong>Copy Command</strong><p>Paste into ChatGPT and I send the drafts.</p></div>
       </section>
 
       {result?.ok ? (
