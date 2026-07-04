@@ -179,15 +179,16 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v1.3 Gmail Sync Setup</div>
+        <div className="kicker">AutoHQ • v1.4 Next Messages</div>
         <h1>Good Morning Gregory</h1>
-        <p>Everything is connected here: leads, drafts, Gmail setup, pipeline, inbox, follow-ups, and deals.</p>
+        <p>Everything is connected here: leads, drafts, Gmail scan, pipeline, inbox, next messages, follow-ups, and deals.</p>
         <div className="actions">
           <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>{autoRunLoading ? "Auto Running..." : "Auto Run Day"}</button>
           <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
           <a className="secondary" href="/gmail-sync">Gmail Sync</a>
           <a className="secondary" href="/pipeline">Pipeline</a>
           <a className="secondary" href="/inbox">Reply Tracker</a>
+          <a className="secondary" href="/next-messages">Next Messages</a>
           <a className="secondary" href="/followups">Follow-ups</a>
           <a className="secondary" href="/deals">Deals</a>
           <a className="secondary" href="/gmail-drafts">Gmail Drafts</a>
@@ -201,9 +202,9 @@ export default function Page() {
         <a className="card" href="/"><span>Step 1</span><strong>Find Leads</strong><p>Run Auto Day and create drafts.</p></a>
         <a className="card" href="/pipeline"><span>Step 2</span><strong>Pipeline</strong><p>Send approved drafts and mark sent.</p></a>
         <a className="card" href="/inbox"><span>Step 3</span><strong>Reply Tracker</strong><p>Track replies and move leads.</p></a>
-        <a className="card" href="/followups"><span>Step 4</span><strong>Follow-ups</strong><p>Create follow-up drafts.</p></a>
-        <a className="card" href="/deals"><span>Step 5</span><strong>Deals</strong><p>Track interested, client, or archived.</p></a>
-        <a className="card" href="/gmail-sync"><span>Setup</span><strong>Gmail Sync</strong><p>Check Gmail keys for reply scanning.</p></a>
+        <a className="card" href="/next-messages"><span>Step 4</span><strong>Next Messages</strong><p>Create review-only next messages.</p></a>
+        <a className="card" href="/followups"><span>Step 5</span><strong>Follow-ups</strong><p>Create follow-up drafts.</p></a>
+        <a className="card" href="/deals"><span>Step 6</span><strong>Deals</strong><p>Track interested, client, or archived.</p></a>
       </section>
 
       <section className="card finder-card">
