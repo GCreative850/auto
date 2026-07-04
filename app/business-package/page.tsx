@@ -6,7 +6,7 @@ export default function BusinessPackagePage() {
         <h1>Short Promo Content for Local Businesses</h1>
         <p>We help local businesses turn their services, offers, photos, and existing online presence into short-form promo content for Instagram, TikTok, Facebook, and YouTube Shorts.</p>
         <div className="actions">
-          <a className="primary" href="mailto:gregorycrowell2002@gmail.com?subject=I want to start the $49 promo sample&body=Business name:%0AWebsite or social link:%0APackage:%0AWhat service or offer should be promoted:%0A">Start With $49 Sample</a>
+          <a className="primary" href="/pay">Start With $49 Sample</a>
           <a className="secondary" href="#packages">View Packages</a>
         </div>
       </section>
@@ -44,9 +44,9 @@ export default function BusinessPackagePage() {
       <section className="board">
         <div className="card">
           <h2>How It Works</h2>
-          <div className="item"><strong>1. Send your business info</strong><p>Website, social page, service, offer, or photos/videos you want used.</p></div>
-          <div className="item"><strong>2. We create the content direction</strong><p>You receive a short promo concept, caption, hook, and call-to-action.</p></div>
-          <div className="item"><strong>3. Upgrade only if useful</strong><p>Start small with the $49 sample, then continue monthly if it helps your business.</p></div>
+          <div className="item"><strong>1. Choose a package</strong><p>Start with the $49 sample or pick a monthly option.</p></div>
+          <div className="item"><strong>2. Send your business info</strong><p>Website, social page, service, offer, or photos/videos you want used.</p></div>
+          <div className="item"><strong>3. Get the content direction</strong><p>You receive a short promo concept, caption, hook, and call-to-action.</p></div>
         </div>
         <div className="card">
           <h2>Good For</h2>
@@ -57,9 +57,9 @@ export default function BusinessPackagePage() {
       <section className="card">
         <h2>Start Today</h2>
         <div className="item">
-          <strong>Send your business name, website/social link, and the service you want promoted.</strong>
+          <strong>Pay for the sample, then send your business name, website/social link, and the service you want promoted.</strong>
           <p>We will start with a simple content concept built around what your business already has.</p>
-          <a className="primary small" href="mailto:gregorycrowell2002@gmail.com?subject=I want to start the $49 promo sample&body=Business name:%0AWebsite or social link:%0APackage:%0AWhat service or offer should be promoted:%0A">Email to Start</a>
+          <a className="primary small" href="/pay">Go To Payment</a>
         </div>
       </section>
     </main>
