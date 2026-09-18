@@ -32,7 +32,7 @@ export default function Page() {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [finderNiche, setFinderNiche] = useState("Roofing");
   const [finderCity, setFinderCity] = useState("Phoenix");
-  const [finderState, setFinderState] = useState("FL");
+  const [finderState, setFinderState] = useState("AZ");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [message, setMessage] = useState("");
