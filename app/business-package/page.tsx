@@ -2,64 +2,63 @@ export default function BusinessPackagePage() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">Gregory Crowell Creative</div>
-        <h1>Short Promo Content for Local Businesses</h1>
-        <p>We help local businesses turn their services, offers, photos, and existing online presence into short-form promo content for Instagram, TikTok, Facebook, and YouTube Shorts.</p>
+        <div className="kicker">GCCreative / AutoHQ AI</div>
+        <h1>Turn More Website Visits Into Calls & Estimate Requests</h1>
+        <p>We build focused mobile lead pages for local service businesses using your existing brand, services, reviews, photos, and contact information.</p>
         <div className="actions">
-          <a className="primary" href="/pay">Start With $49 Sample</a>
-          <a className="secondary" href="#packages">View Packages</a>
+          <a className="primary" href="/start">Request Free Mockup</a>
+          <a className="secondary" href="#packages">View Pricing</a>
         </div>
       </section>
 
       <section className="grid" id="packages">
         <div className="card">
-          <span>Fast Start</span>
-          <strong>Sample Starter</strong>
-          <h2>$49</h2>
-          <p>1 short promo reel concept</p>
-          <p>1 caption</p>
-          <p>1 call-to-action</p>
-          <p>24-48 hour concept delivery</p>
+          <span>No obligation</span>
+          <strong>Custom Mockup</strong>
+          <h2>$0</h2>
+          <p>1 personalized homepage/lead-page concept</p>
+          <p>Built around your current business</p>
+          <p>See the direction before paying</p>
         </div>
         <div className="card">
-          <span>Best Test</span>
-          <strong>Local Growth Pack</strong>
-          <h2>$99</h2>
-          <p>4 short promo concepts</p>
-          <p>4 captions</p>
-          <p>Service or offer angle ideas</p>
-          <p>Simple posting plan</p>
+          <span>Main Offer</span>
+          <strong>Lead Page Launch</strong>
+          <h2>$450</h2>
+          <p>Mobile-first landing page</p>
+          <p>Click-to-call + estimate form</p>
+          <p>Services, reviews, service area, CTA</p>
+          <p>Basic local SEO structure + Vercel deployment</p>
         </div>
         <div className="card">
-          <span>Recurring</span>
-          <strong>Monthly Auto Content</strong>
-          <h2>$199/mo</h2>
-          <p>8 short promo concepts</p>
-          <p>8 captions</p>
-          <p>Monthly content direction</p>
-          <p>Ongoing promo ideas</p>
+          <span>Optional</span>
+          <strong>Care Plan</strong>
+          <h2>$99/mo</h2>
+          <p>Text/photo/service updates</p>
+          <p>Offer changes and small edits</p>
+          <p>Landing-page maintenance</p>
+          <p>Cancel anytime</p>
         </div>
       </section>
 
       <section className="board">
         <div className="card">
           <h2>How It Works</h2>
-          <div className="item"><strong>1. Choose a package</strong><p>Start with the $49 sample or pick a monthly option.</p></div>
-          <div className="item"><strong>2. Send your business info</strong><p>Website, social page, service, offer, or photos/videos you want used.</p></div>
-          <div className="item"><strong>3. Get the content direction</strong><p>You receive a short promo concept, caption, hook, and call-to-action.</p></div>
+          <div className="item"><strong>1. We make the mockup</strong><p>We use your public website/business information to build a personalized concept.</p></div>
+          <div className="item"><strong>2. You approve it</strong><p>If the direction makes sense, we finalize the copy, contact flow, and branding.</p></div>
+          <div className="item"><strong>3. We launch it</strong><p>Pay the $450 setup and we publish the finished page to Vercel and hand over the live link.</p></div>
         </div>
         <div className="card">
-          <h2>Good For</h2>
-          <div className="item"><p>Med spas, barbershops, salons, auto detailers, pressure washers, roofers, landscapers, dentists, HVAC companies, restaurants, and local service businesses.</p></div>
+          <h2>Best Fit</h2>
+          <div className="item"><p>Roofers, HVAC, plumbers, pressure washing, tree service, landscapers, electricians, med spas, dentists, contractors, cleaners, and other appointment/quote-driven businesses.</p></div>
         </div>
       </section>
 
       <section className="card">
-        <h2>Start Today</h2>
+        <h2>Clear Scope</h2>
         <div className="item">
-          <strong>Pay for the sample, then send your business name, website/social link, and the service you want promoted.</strong>
-          <p>We will start with a simple content concept built around what your business already has.</p>
-          <a className="primary small" href="/pay">Go To Payment</a>
+          <strong>This is a conversion-focused web page, not a promise of sales.</strong>
+          <p>Paid ads, full multi-page rebuilds, custom software, guaranteed leads, and guaranteed SEO rankings are not included unless separately quoted.</p>
+          <a className="primary small" href="/start">Request Your Free Mockup</a>
         </div>
       </section>
     </main>
