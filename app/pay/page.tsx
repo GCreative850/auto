@@ -1,23 +1,21 @@
-const samplePay = process.env.NEXT_PUBLIC_PAY_SAMPLE_URL || "https://cash.app/$ZZZaccheus";
-const growthPay = process.env.NEXT_PUBLIC_PAY_GROWTH_URL || "https://cash.app/$ZZZaccheus";
+const launchPay = process.env.NEXT_PUBLIC_PAY_LAUNCH_URL || process.env.NEXT_PUBLIC_PAY_GROWTH_URL || "https://cash.app/$ZZZaccheus";
 const monthlyPay = process.env.NEXT_PUBLIC_PAY_MONTHLY_URL || "https://cash.app/$ZZZaccheus";
 
 const packages = [
-  { name: "Sample Starter", price: "$49", link: samplePay, detail: "One short promo concept, caption, and call-to-action." },
-  { name: "Local Growth Pack", price: "$99", link: growthPay, detail: "Four short promo concepts with captions and posting direction." },
-  { name: "Monthly Auto Content", price: "$199/mo", link: monthlyPay, detail: "Eight short promo concepts per month with captions and direction." }
+  { name: "Lead Page Launch", price: "$450", link: launchPay, detail: "One conversion-focused mobile lead page with click-to-call, estimate form, service/review copy, basic SEO structure, and deployment." },
+  { name: "Care Plan", price: "$99/mo", link: monthlyPay, detail: "Optional ongoing text, photo, offer, and service updates after launch." }
 ];
 
 export default function PayPage() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">Gregory Crowell Creative</div>
-        <h1>Secure Your Promo Package</h1>
-        <p>Pick a package, pay, then send your business details so the promo content can be started.</p>
+        <div className="kicker">GCCreative / AutoHQ AI</div>
+        <h1>Launch Your Lead Page</h1>
+        <p>Use this page after you approve the mockup. The standard launch is $450; ongoing upkeep is optional.</p>
         <div className="actions">
-          <a className="secondary" href="/business-package">View Packages</a>
-          <a className="secondary" href="/start">Start Details</a>
+          <a className="secondary" href="/business-package">View Package</a>
+          <a className="secondary" href="/start">Send Business Details</a>
         </div>
       </section>
 
@@ -34,8 +32,8 @@ export default function PayPage() {
 
       <section className="card">
         <h2>After Payment</h2>
-        <div className="item"><strong>Send your business details</strong><p>Business name, website/social link, package choice, and service or offer to promote.</p></div>
-        <div className="item"><strong>Start small</strong><p>The $49 sample is the easiest first step before moving into monthly content.</p></div>
+        <div className="item"><strong>Send the final business details</strong><p>Business name, phone/email, services, service area, preferred CTA, logo/colors, and any reviews/photos you want featured.</p></div>
+        <div className="item"><strong>Launch</strong><p>We finalize the approved concept and publish the finished page. The care plan is optional.</p></div>
       </section>
     </main>
   );
