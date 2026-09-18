@@ -37,11 +37,11 @@ export async function POST(request: Request) {
     await prisma.aiActivityLog.create({
       data: {
         title: "Custom automation run",
-        detail: `Completed ${successCount}/4 steps for ${niche} in ${city}, ${state}.`
+        detail: `Completed ${successCount}/5 steps for ${niche} in ${city}, ${state}.`
       }
     });
 
-    return NextResponse.json({ ok: true, niche, city, state, limit, successCount, totalSteps: 4, results });
+    return NextResponse.json({ ok: true, niche, city, state, limit, successCount, totalSteps: 5, results });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Unknown error" },
