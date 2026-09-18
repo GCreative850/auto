@@ -2,7 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/db";
 
 function responseDraftBody(lead: { name: string; niche: string; city: string; state: string }) {
-  return `Hi ${lead.name} team,\n\nThanks for getting back to me. I can put together a free short promo reel concept for your ${lead.niche.toLowerCase()} business in ${lead.city}, ${lead.state}.\n\nThe easiest next step is for me to use your current website, photos, and services to draft a quick content direction. If you have a specific offer, service, or event you want highlighted, send it over and I’ll base the sample around that.\n\nBest,\nGregory\nGregory Crowell Creative`;
+  return `Hi ${lead.name} team,
+
+Thanks for getting back to me. The next step is simple: I can put together the no-obligation mobile lead-page mockup using your current website, services, reviews, branding, and public business information.
+
+I’ll focus the mockup on one clear action — call, estimate request, or booking — so you can see the direction before paying anything. If you want the approved version launched, the setup is $450, with optional $99/month upkeep afterward.
+
+If there’s one service or offer you want the mockup centered on, send it over. Otherwise I’ll use the main service shown on your site.
+
+Gregory Crowell
+GCCreative / AutoHQ AI`;
 }
 
 export async function POST(request: Request) {
@@ -26,7 +35,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Lead has no email" }, { status: 400 });
     }
 
-    const subject = `Re: Free promo reel idea for ${lead.name}`;
+    if (lead.status === "LOST") {
+      return NextResponse.json({ ok: false, error: "Lead is suppressed/lost" }, { status: 409 });
+    }
+
+    const subject = `Re: Quick lead-page idea for ${lead.name}`;
 
     const existing = await prisma.outreachDraft.findFirst({
       where: {
@@ -51,8 +64,8 @@ export async function POST(request: Request) {
 
     await prisma.aiActivityLog.create({
       data: {
-        title: "Response draft created",
-        detail: `Created response draft for ${lead.name}`
+        title: "Lead-page response draft created",
+        detail: `Created mockup-next-step response for ${lead.name}`
       }
     });
 
