@@ -1,7 +1,7 @@
 "use client";
 
 const businessLink = "https://auto-azure.vercel.app/business-package";
-const message = `Here is the simple package page with the $49 sample and monthly options: ${businessLink}`;
+const message = `Here is the simple lead-page package: I can mock up the concept first at no obligation. If you want it launched, the full setup is $450 with optional $99/month upkeep: ${businessLink}`;
 
 export default function PackageSenderPage() {
   async function copy(text: string) {
@@ -13,7 +13,7 @@ export default function PackageSenderPage() {
       <section className="hero">
         <div className="kicker">AutoHQ Package Sender</div>
         <h1>Package Sender</h1>
-        <p>Use this with Send Queue when a business needs the clean package link.</p>
+        <p>Use this when an interested business wants the offer and pricing in one clean page.</p>
         <div className="actions">
           <a className="secondary" href="/send-queue">Send Queue</a>
           <a className="secondary" href="/business-package">View Client Page</a>
