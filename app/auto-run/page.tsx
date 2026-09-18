@@ -14,9 +14,9 @@ type RunResult = {
 };
 
 export default function AutoRunPage() {
-  const [niche, setNiche] = useState("Auto Detailing");
-  const [city, setCity] = useState("Pensacola");
-  const [state, setState] = useState("FL");
+  const [niche, setNiche] = useState("Roofing");
+  const [city, setCity] = useState("Phoenix");
+  const [state, setState] = useState("AZ");
   const [limit, setLimit] = useState("10");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
@@ -24,7 +24,7 @@ export default function AutoRunPage() {
 
   const sendCommand = useMemo(() => {
     const count = result?.results?.drafts?.createdCount || limit;
-    return `Send the next ${count} Gmail drafts now. Keep trying one-by-one until they are sent. If a draft blocks, retry it after sending the others, then tell me exactly how many sent and who replied.`;
+    return `Review the next ${count} approved Gmail drafts. Send only to verified business emails that are not bounced, opted out, duplicated, or suppressed. Send one-by-one, stop contacting any negative reply, and report sent, skipped, bounced, and replies.`;
   }, [limit, result]);
 
   async function runAuto() {
@@ -89,7 +89,7 @@ export default function AutoRunPage() {
         <div className="card"><span>Step 1</span><strong>Find Leads</strong><p>Runs Places lead search.</p></div>
         <div className="card"><span>Step 2</span><strong>Find Emails</strong><p>Enriches websites into email-ready leads.</p></div>
         <div className="card"><span>Step 3</span><strong>Create Drafts</strong><p>Makes Gmail-ready outreach drafts.</p></div>
-        <div className="card"><span>Step 4</span><strong>Copy Command</strong><p>Paste into ChatGPT and I send the drafts.</p></div>
+        <div className="card"><span>Step 4</span><strong>Copy Command</strong><p>Paste into ChatGPT for verified, controlled sending.</p></div>
       </section>
 
       {result?.ok ? (
