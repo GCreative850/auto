@@ -1,16 +1,26 @@
 "use client";
 
 const presets = [
-  ["Auto Detailing", "Pensacola", "FL"],
-  ["Pressure Washing", "Gulf Breeze", "FL"],
-  ["Med Spa", "Navarre", "FL"],
-  ["Roofing", "Milton", "FL"],
-  ["Barbershop", "Pace", "FL"],
-  ["Hair Salon", "Fort Walton Beach", "FL"],
-  ["Landscaping", "Destin", "FL"],
-  ["HVAC", "Panama City Beach", "FL"],
-  ["Dentist", "Pensacola", "FL"],
-  ["Restaurant", "Mobile", "AL"]
+  ["Roofing", "Phoenix", "AZ"],
+  ["Roofing", "Houston", "TX"],
+  ["HVAC", "Dallas", "TX"],
+  ["Plumbing", "San Antonio", "TX"],
+  ["Pressure Washing", "Tampa", "FL"],
+  ["Tree Service", "Atlanta", "GA"],
+  ["Roofing", "Charlotte", "NC"],
+  ["HVAC", "Nashville", "TN"],
+  ["Landscaping", "Denver", "CO"],
+  ["Electrician", "Las Vegas", "NV"],
+  ["Med Spa", "Scottsdale", "AZ"],
+  ["Dentist", "Orlando", "FL"],
+  ["Roofing", "Columbus", "OH"],
+  ["HVAC", "Indianapolis", "IN"],
+  ["Plumbing", "Kansas City", "MO"],
+  ["Pressure Washing", "Jacksonville", "FL"],
+  ["Tree Service", "Raleigh", "NC"],
+  ["Roofing", "Oklahoma City", "OK"],
+  ["HVAC", "Richmond", "VA"],
+  ["Landscaping", "Salt Lake City", "UT"]
 ];
 
 export default function BroadPage() {
@@ -23,11 +33,12 @@ export default function BroadPage() {
     <main className="container">
       <section className="hero">
         <div className="kicker">AutoHQ Broad Markets</div>
-        <h1>Broad Market Runner</h1>
-        <p>Pick a high-demand local market, then run Automation for that niche and city.</p>
+        <h1>Nationwide Market Runner</h1>
+        <p>Rotate through high-value quote-driven businesses across multiple U.S. markets instead of relying on one niche or one state.</p>
         <div className="actions">
           <a className="secondary" href="/">Dashboard</a>
           <a className="secondary" href="/automation">Automation</a>
+          <a className="secondary" href="/money-mode">Money Mode</a>
           <a className="secondary" href="/status">Status</a>
         </div>
       </section>
