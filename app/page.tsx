@@ -215,7 +215,7 @@ export default function Page() {
         <div className="finder-form">
           <label>Niche<input value={finderNiche} onChange={(event) => setFinderNiche(event.target.value)} placeholder="Roofing" /></label>
           <label>City<input value={finderCity} onChange={(event) => setFinderCity(event.target.value)} placeholder="Phoenix" /></label>
-          <label>State<input value={finderState} onChange={(event) => setFinderState(event.target.value)} placeholder="FL" /></label>
+          <label>State<input value={finderState} onChange={(event) => setFinderState(event.target.value)} placeholder="AZ" /></label>
           <button className="primary button-reset" disabled={finderLoading} onClick={findRealLeads}>{finderLoading ? "Finding..." : "Find With Google"}</button>
         </div>
         <div className="actions enrichment-actions">
