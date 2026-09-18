@@ -187,7 +187,10 @@ export default function Page() {
           <a className="primary" href="/command-center">Command Center</a>
           <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>{autoRunLoading ? "Auto Running..." : "Auto Run Day"}</button>
           <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
-          <a className="secondary" href="/business-package">Client Offer</a>\n          <a className="secondary" href="/money-mode">Money Mode</a>\n          <a className="secondary" href="/concept-builder">Mockup Builder</a>\n          <a className="secondary" href="/gmail-sync">Gmail Sync</a>
+          <a className="secondary" href="/business-package">Client Offer</a>
+          <a className="secondary" href="/money-mode">Money Mode</a>
+          <a className="secondary" href="/concept-builder">Mockup Builder</a>
+          <a className="secondary" href="/gmail-sync">Gmail Sync</a>
           <a className="secondary" href="/pipeline">Pipeline</a>
           <a className="secondary" href="/inbox">Reply Tracker</a>
           <a className="secondary" href="/next-messages">Next Messages</a>
