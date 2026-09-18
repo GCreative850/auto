@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/db";
 
 const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
-const COMMON_BAD_MATCHES = ["example.com", "sentry.io", "wixpress.com", "schema.org"];
+const COMMON_BAD_MATCHES = [
+  "example.com",
+  "sentry.io",
+  "wixpress.com",
+  "schema.org",
+  "wordpress.com",
+  "cloudflare.com"
+];
+const BAD_LOCAL_PARTS = ["noreply", "no-reply", "donotreply", "do-not-reply", "mailer-daemon"];
 
 function cleanEmail(email: string) {
   return email.toLowerCase().replace(/[),.;]+$/g, "").trim();
@@ -13,6 +21,14 @@ function normalizeWebsite(website: string) {
   return `https://${website}`;
 }
 
+function websiteDomain(website: string) {
+  try {
+    return new URL(normalizeWebsite(website)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
 function buildCandidateUrls(website: string) {
   const base = normalizeWebsite(website).replace(/\/$/, "");
   return [base, `${base}/contact`, `${base}/contact-us`, `${base}/about`, `${base}/about-us`];
@@ -21,10 +37,24 @@ function buildCandidateUrls(website: string) {
 function extractEmails(html: string) {
   const matches = html.match(EMAIL_REGEX) || [];
   const emails = matches.map(cleanEmail).filter((email) => {
+    const [local] = email.split("@");
+    if (!local) return false;
+    if (BAD_LOCAL_PARTS.some((term) => local.includes(term))) return false;
     return !COMMON_BAD_MATCHES.some((badMatch) => email.includes(badMatch));
   });
 
   return Array.from(new Set(emails));
+}
+
+function scoreEmail(email: string, domain: string) {
+  const [local, emailDomain = ""] = email.split("@");
+  let score = 0;
+
+  if (domain && (emailDomain === domain || emailDomain.endsWith(`.${domain}`))) score += 100;
+  if (["info", "contact", "hello", "office", "sales", "service", "support", "appointments", "booking"].includes(local)) score += 25;
+  if (["gmail.com", "outlook.com", "yahoo.com", "icloud.com", "hotmail.com"].includes(emailDomain)) score += 5;
+
+  return score;
 }
 
 async function fetchPageText(url: string) {
@@ -46,17 +76,19 @@ async function fetchPageText(url: string) {
 async function findEmailForWebsite(website: string | null) {
   if (!website) return null;
 
-  const urls = buildCandidateUrls(website);
+  const domain = websiteDomain(website);
+  const found = new Set<string>();
 
-  for (const url of urls) {
+  for (const url of buildCandidateUrls(website)) {
     const html = await fetchPageText(url);
     if (!html) continue;
-
-    const emails = extractEmails(html);
-    if (emails.length) return emails[0];
+    for (const email of extractEmails(html)) found.add(email);
   }
 
-  return null;
+  if (!found.size) return null;
+
+  return [...found]
+    .sort((a, b) => scoreEmail(b, domain) - scoreEmail(a, domain))[0] || null;
 }
 
 export async function POST(request: Request) {
@@ -67,9 +99,10 @@ export async function POST(request: Request) {
     const leads = await prisma.lead.findMany({
       where: {
         email: null,
-        website: { not: null }
+        website: { not: null },
+        status: { not: "LOST" }
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ score: "desc" }, { createdAt: "desc" }],
       take: limit
     });
 
@@ -93,7 +126,7 @@ export async function POST(request: Request) {
     await prisma.aiActivityLog.create({
       data: {
         title: "Lead emails enriched",
-        detail: `Checked ${checked.length} leads and found ${updated.length} emails`
+        detail: `Checked ${checked.length} leads and found ${updated.length} official-site email candidates`
       }
     });
 
