@@ -120,6 +120,24 @@ export async function POST() {
       const email = draft.lead.email;
       if (!email) continue;
 
+      const bounceQuery = encodeURIComponent(`from:mailer-daemon newer_than:45d "${email}"`);
+      const bounceList = await gmailGet<GmailMessageList>(`messages?q=${bounceQuery}&maxResults=1`, accessToken);
+
+      if (bounceList.messages?.[0]) {
+        await prisma.lead.update({ where: { id: draft.leadId }, data: { status: "LOST" } });
+        detected.push({
+          leadId: draft.leadId,
+          leadName: draft.lead.name,
+          email,
+          from: "Mail Delivery Subsystem",
+          subject: "Delivery failure detected",
+          date: "",
+          snippet: "Recipient address bounced; lead suppressed.",
+          classification: "BOUNCE"
+        });
+        continue;
+      }
+
       const query = encodeURIComponent(`from:${email} newer_than:45d`);
       const list = await gmailGet<GmailMessageList>(`messages?q=${query}&maxResults=5`, accessToken);
       const first = list.messages?.[0];
