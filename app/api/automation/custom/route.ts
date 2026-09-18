@@ -20,8 +20,8 @@ async function call(url: string, path: string, body?: Record<string, unknown>) {
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const niche = String(body.niche || "Med Spa").trim() || "Med Spa";
-    const city = String(body.city || "Pensacola").trim() || "Pensacola";
+    const niche = String(body.niche || "Roofing").trim() || "Roofing";
+    const city = String(body.city || "Phoenix").trim() || "Phoenix";
     const state = String(body.state || "FL").trim() || "FL";
     const limit = Math.min(Math.max(Number(body.limit || 10), 1), 25);
     const url = base(request);
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const results = [];
     results.push(await call(url, "/api/leads/find", { niche, city, state }));
     results.push(await call(url, "/api/leads/enrich-emails", { limit }));
+    results.push(await call(url, "/api/gmail-sync/bounces"));
     results.push(await call(url, "/api/outreach/drafts", { bulk: true }));
     results.push(await call(url, "/api/gmail-sync/scan"));
 
