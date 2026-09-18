@@ -8,8 +8,22 @@ function buildDraft(lead: {
   state: string;
   website: string | null;
 }) {
-  const subject = `Free promo reel idea for ${lead.name}`;
-  const body = `Hi ${lead.name} team,\n\nI’m reaching out from Gregory Crowell Creative. We help local businesses turn their existing photos, videos, services, and offers into short promo reels for Instagram, TikTok, Facebook, and YouTube Shorts.\n\nI wanted to offer ${lead.name} a free sample reel concept first. No upfront cost — I’ll create a short concept around your ${lead.niche.toLowerCase()} business in ${lead.city}, ${lead.state}. If you like the direction, we can talk about doing more consistently.\n\nThis is built to help you get more attention online without having to film, edit, or post everything yourself.\n\nWould you be open to me sending over a free sample concept?\n\nBest,\nGregory\nGregory Crowell Creative`;
+  const subject = `Quick lead-page idea for ${lead.name}`;
+  const niche = lead.niche || "local service";
+  const body = `Hi ${lead.name} team,
+
+I’m Gregory with GCCreative / AutoHQ AI. I build focused mobile lead pages for quote- and appointment-driven businesses.
+
+I came across ${lead.name} in ${lead.city}, ${lead.state}. I can put together a no-obligation custom mockup showing a cleaner path from mobile visitor to call, estimate, or booking request, using your current branding and public business information.
+
+If you like the direction, the full launch is $450 and includes a mobile-first lead page, click-to-call, estimate/booking form, services, reviews, service-area copy, basic SEO structure, and deployment. Ongoing updates are optional at $99/month.
+
+Would you like me to send the mockup?
+
+Gregory Crowell
+GCCreative / AutoHQ AI
+
+If this isn’t relevant, just reply no and I won’t follow up.`;
 
   return { subject, body };
 }
@@ -69,23 +83,25 @@ export async function POST(request: Request) {
       const leads = await prisma.lead.findMany({
         where: {
           email: { not: null },
+          status: { in: ["NEW", "CONTACTED"] },
           drafts: { none: {} }
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ score: "desc" }, { createdAt: "desc" }],
         take: 25
       });
 
       const drafts = [];
 
       for (const lead of leads) {
+        if (!lead.email || !lead.email.includes("@")) continue;
         const draft = await createDraftForLead(lead);
         drafts.push(draft);
       }
 
       await prisma.aiActivityLog.create({
         data: {
-          title: "Bulk outreach drafts created",
-          detail: `Created ${drafts.length} outreach drafts for email-ready leads`
+          title: "Bulk lead-page drafts created",
+          detail: `Created ${drafts.length} $450 lead-page outreach drafts for email-ready leads`
         }
       });
 
@@ -109,6 +125,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Lead not found" }, { status: 404 });
     }
 
+    if (lead.status === "LOST") {
+      return NextResponse.json({ ok: false, error: "Lead is suppressed/lost" }, { status: 409 });
+    }
+
     const existingDraft = await prisma.outreachDraft.findFirst({ where: { leadId: lead.id } });
 
     if (existingDraft) {
@@ -119,8 +139,8 @@ export async function POST(request: Request) {
 
     await prisma.aiActivityLog.create({
       data: {
-        title: "Outreach draft created",
-        detail: `Created outreach draft for ${lead.name}`
+        title: "Lead-page outreach draft created",
+        detail: `Created $450 lead-page outreach draft for ${lead.name}`
       }
     });
 
@@ -141,8 +161,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "draftId is required" }, { status: 400 });
     }
 
-    if (status !== "APPROVED" && status !== "SENT") {
-      return NextResponse.json({ ok: false, error: "Only APPROVED or SENT status is supported right now" }, { status: 400 });
+    if (!["APPROVED", "SENT", "FAILED"].includes(status)) {
+      return NextResponse.json({ ok: false, error: "Supported statuses: APPROVED, SENT, FAILED" }, { status: 400 });
     }
 
     const draft = await prisma.outreachDraft.update({
@@ -160,8 +180,8 @@ export async function PATCH(request: Request) {
 
     await prisma.aiActivityLog.create({
       data: {
-        title: status === "SENT" ? "Outreach marked sent" : "Outreach draft approved",
-        detail: `${status === "SENT" ? "Marked sent" : "Approved outreach draft"} for ${draft.lead.name}`
+        title: status === "SENT" ? "Outreach marked sent" : status === "FAILED" ? "Outreach failed" : "Outreach draft approved",
+        detail: `${status} outreach for ${draft.lead.name}`
       }
     });
 
