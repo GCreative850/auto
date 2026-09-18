@@ -2,24 +2,24 @@
 
 const offers = [
   {
-    name: "Today Intro Reel",
-    price: "$49",
-    detail: "One short promo reel concept using their current website, services, photos, or public social content."
+    name: "Free Custom Mockup",
+    price: "$0",
+    detail: "Personalized mobile lead-page concept built from the prospect's existing public website and business information."
   },
   {
-    name: "Starter Content Pack",
-    price: "$99",
-    detail: "Four short promo post ideas/reels for one service, offer, event, or local special."
+    name: "Lead Page Launch",
+    price: "$450",
+    detail: "Mobile landing page, click-to-call, quote form, services, reviews, service area, basic SEO structure, and Vercel deployment."
   },
   {
-    name: "Monthly Local Content",
-    price: "$199",
-    detail: "Eight short content pieces per month plus caption ideas and simple posting plan."
+    name: "Care Plan",
+    price: "$99/mo",
+    detail: "Optional ongoing text, photo, offer, and service updates after launch."
   }
 ];
 
-const closeScript = `I can start with a simple $49 intro reel so there is no big commitment. If you like it, we can move into a small monthly plan where I keep content ideas going for your business. Want me to send the payment link and start with your website/photos?`;
-const outreachScript = `Hey, I help local businesses turn their current services, photos, and offers into short promo reels for TikTok, Instagram, Facebook, and YouTube Shorts. I am doing a $49 intro reel today for local businesses. Want me to make one quick concept for your business?`;
+const closeScript = `I can build the mockup first so you can see the direction before paying. If you want it live, the full launch is $450 and includes the mobile lead page, click-to-call, estimate form, reviews/service copy, and deployment. Ongoing updates are optional at $99/month. Want me to make the mockup?`;
+const outreachScript = `Hey — I build focused mobile lead pages for local service businesses. I noticed a few places where your current website could make it faster for visitors to call or request an estimate. I can mock up a personalized version first at no obligation. If you like it, launch is $450. Want me to send the mockup?`;
 
 export default function MoneyModePage() {
   async function copyText(text: string) {
@@ -30,8 +30,8 @@ export default function MoneyModePage() {
     <main className="container">
       <section className="hero">
         <div className="kicker">AutoHQ Money Mode</div>
-        <h1>Today&apos;s Offer</h1>
-        <p>Use this page to turn AutoHQ leads into paid intro work today.</p>
+        <h1>$1,300 Sprint Offer</h1>
+        <p>Close 3 standard launches and the target is covered.</p>
         <div className="actions">
           <a className="secondary" href="/">Dashboard</a>
           <a className="primary" href="/package">Business Package</a>
@@ -69,10 +69,9 @@ export default function MoneyModePage() {
       </section>
 
       <section className="card">
-        <h2>Today&apos;s Target</h2>
-        <div className="item"><strong>Send 30 approved drafts</strong><p>Use Broad Markets, Automation, then Send Queue.</p></div>
-        <div className="item"><strong>Get 3 interested replies</strong><p>Move them into Deals and use the $49 intro close.</p></div>
-        <div className="item"><strong>Close 1 paid intro</strong><p>Start with one simple reel concept, then upsell monthly.</p></div>
+        <h2>Target</h2>
+        <div className="item"><strong>3 × $450 = $1,350</strong><p>Prioritize businesses where one new job can easily justify the setup fee.</p></div>
+        <div className="item"><strong>Mockup first</strong><p>Use personalization to earn the reply instead of competing on generic website pricing.</p></div>
       </section>
     </main>
   );
