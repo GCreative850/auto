@@ -8,7 +8,18 @@ function buildFollowUp(lead: {
   state: string;
 }) {
   const subject = `Quick follow-up for ${lead.name}`;
-  const body = `Hi ${lead.name} team,\n\nJust wanted to follow up on my last message. I’d still be happy to put together a free short promo reel concept for your ${lead.niche.toLowerCase()} business in ${lead.city}, ${lead.state}.\n\nNo pressure — I just think it could give you an easy piece of content to use for Instagram, TikTok, Facebook, or YouTube Shorts.\n\nWould you like me to send over a quick sample idea?\n\nBest,\nGregory\nGregory Crowell Creative`;
+  const body = `Hi ${lead.name} team,
+
+Just following up on my last note. I can still put together a no-obligation mobile lead-page mockup for ${lead.name}, focused on making it easier for visitors to call, request an estimate, or book.
+
+If the direction is useful, the full launch is $450 with optional $99/month upkeep. If not, no problem.
+
+Want me to send the mockup?
+
+Gregory Crowell
+GCCreative / AutoHQ AI
+
+If this isn’t relevant, just reply no and I won’t follow up again.`;
 
   return { subject, body };
 }
@@ -38,10 +49,16 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+
     const sentDrafts = await prisma.outreachDraft.findMany({
-      where: { status: "SENT" },
+      where: {
+        status: "SENT",
+        updatedAt: { lte: twoDaysAgo },
+        lead: { status: "CONTACTED" }
+      },
       include: { lead: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: "asc" },
       take: 25
     });
 
@@ -74,7 +91,7 @@ export async function POST() {
     await prisma.aiActivityLog.create({
       data: {
         title: "Follow-up drafts created",
-        detail: `Created ${created.length} follow-up drafts from sent outreach`
+        detail: `Created ${created.length} one-time follow-up drafts for leads waiting at least 2 days`
       }
     });
 
