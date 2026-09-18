@@ -134,6 +134,7 @@ export default function Page() {
       setError("");
       await findRealLeads();
       await enrichEmails();
+      await fetch("/api/gmail-sync/bounces", { method: "POST" });
       await createBulkDrafts();
       setMessage("Auto Day complete. Review drafts, then use Pipeline.");
       await refreshAll();
