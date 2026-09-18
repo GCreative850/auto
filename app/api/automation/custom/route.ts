@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const niche = String(body.niche || "Roofing").trim() || "Roofing";
     const city = String(body.city || "Phoenix").trim() || "Phoenix";
-    const state = String(body.state || "FL").trim() || "FL";
+    const state = String(body.state || "AZ").trim() || "AZ";
     const limit = Math.min(Math.max(Number(body.limit || 10), 1), 25);
     const url = base(request);
 
