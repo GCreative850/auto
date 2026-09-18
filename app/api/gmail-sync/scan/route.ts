@@ -18,6 +18,53 @@ function header(message: GmailMessage, name: string) {
   return message.payload?.headers?.find((item) => item.name.toLowerCase() === name.toLowerCase())?.value || "";
 }
 
+function classifyReply(subject: string, snippet: string) {
+  const text = `${subject} ${snippet}`.toLowerCase();
+
+  const automated = [
+    "out of office",
+    "automatic reply",
+    "auto reply",
+    "autoreply",
+    "away from the office",
+    "on leave",
+    "vacation reply"
+  ];
+  if (automated.some((term) => text.includes(term))) return "AUTOMATED";
+
+  const negative = [
+    "unsubscribe",
+    "remove me",
+    "do not contact",
+    "don't contact",
+    "not interested",
+    "no thanks",
+    "no thank you",
+    "stop emailing",
+    "stop contacting"
+  ];
+  if (negative.some((term) => text.includes(term))) return "NEGATIVE";
+
+  const positive = [
+    "interested",
+    "send it",
+    "send the mockup",
+    "show me",
+    "tell me more",
+    "more info",
+    "how much",
+    "what does it cost",
+    "let's do it",
+    "lets do it",
+    "sounds good",
+    "yes",
+    "sure"
+  ];
+  if (positive.some((term) => text.includes(term))) return "POSITIVE";
+
+  return "REPLY";
+}
+
 async function getAccessToken() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -82,9 +129,13 @@ export async function POST() {
       const subject = header(message, "Subject");
       const from = header(message, "From");
       const date = header(message, "Date");
+      const snippet = message.snippet || "";
+      const classification = classifyReply(subject, snippet);
 
-      if (draft.lead.status === "CONTACTED") {
+      if (classification === "POSITIVE" && draft.lead.status === "CONTACTED") {
         await prisma.lead.update({ where: { id: draft.leadId }, data: { status: "INTERESTED" } });
+      } else if (classification === "NEGATIVE") {
+        await prisma.lead.update({ where: { id: draft.leadId }, data: { status: "LOST" } });
       }
 
       detected.push({
@@ -94,18 +145,27 @@ export async function POST() {
         from,
         subject,
         date,
-        snippet: message.snippet || ""
+        snippet,
+        classification
       });
     }
+
+    const actionable = detected.filter((item) => item.classification === "POSITIVE" || item.classification === "REPLY");
 
     await prisma.aiActivityLog.create({
       data: {
         title: "Gmail reply scan complete",
-        detail: `Detected ${detected.length} possible replies from sent outreach`
+        detail: `Detected ${detected.length} replies; ${actionable.length} potentially actionable`
       }
     });
 
-    return NextResponse.json({ ok: true, scanned: sentDrafts.length, detectedCount: detected.length, detected });
+    return NextResponse.json({
+      ok: true,
+      scanned: sentDrafts.length,
+      detectedCount: detected.length,
+      actionableCount: actionable.length,
+      detected
+    });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Unknown error" },
