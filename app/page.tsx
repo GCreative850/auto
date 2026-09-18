@@ -30,8 +30,8 @@ export default function Page() {
   const [bulkDraftLoading, setBulkDraftLoading] = useState(false);
   const [autoRunLoading, setAutoRunLoading] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
-  const [finderNiche, setFinderNiche] = useState("Med Spa");
-  const [finderCity, setFinderCity] = useState("Pensacola");
+  const [finderNiche, setFinderNiche] = useState("Roofing");
+  const [finderCity, setFinderCity] = useState("Phoenix");
   const [finderState, setFinderState] = useState("FL");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
@@ -179,14 +179,14 @@ export default function Page() {
   return (
     <main className="container">
       <section className="hero">
-        <div className="kicker">AutoHQ • v1.5 Command Center</div>
-        <h1>Good Morning Gregory</h1>
-        <p>Everything is connected here: command center, leads, drafts, Gmail scan, pipeline, inbox, next messages, follow-ups, and deals.</p>
+        <div className="kicker">AutoHQ • v2.0 Lead-Page Engine</div>
+        <h1>3 × $450 = $1,350 Sprint</h1>
+        <p>Current offer: free personalized mobile lead-page mockup → $450 launch → optional $99/month care plan. Source nationwide, suppress bad leads, watch replies, and move only qualified prospects toward the close.</p>
         <div className="actions">
           <a className="primary" href="/command-center">Command Center</a>
           <button className="primary" disabled={autoRunLoading} onClick={autoRunDay}>{autoRunLoading ? "Auto Running..." : "Auto Run Day"}</button>
           <button className="secondary button-reset" onClick={refreshAll}>Refresh</button>
-          <a className="secondary" href="/gmail-sync">Gmail Sync</a>
+          <a className="secondary" href="/business-package">Client Offer</a>\n          <a className="secondary" href="/money-mode">Money Mode</a>\n          <a className="secondary" href="/concept-builder">Mockup Builder</a>\n          <a className="secondary" href="/gmail-sync">Gmail Sync</a>
           <a className="secondary" href="/pipeline">Pipeline</a>
           <a className="secondary" href="/inbox">Reply Tracker</a>
           <a className="secondary" href="/next-messages">Next Messages</a>
@@ -200,20 +200,20 @@ export default function Page() {
 
       <section className="grid">
         <a className="card" href="/command-center"><span>Daily</span><strong>Command Center</strong><p>Start here every morning.</p></a>
-        <a className="card" href="/"><span>Step 1</span><strong>Find Leads</strong><p>Run Auto Day and create drafts.</p></a>
-        <a className="card" href="/pipeline"><span>Step 2</span><strong>Pipeline</strong><p>Send approved drafts and mark sent.</p></a>
-        <a className="card" href="/inbox"><span>Step 3</span><strong>Reply Tracker</strong><p>Track replies and move leads.</p></a>
-        <a className="card" href="/next-messages"><span>Step 4</span><strong>Next Messages</strong><p>Create review-only next messages.</p></a>
-        <a className="card" href="/followups"><span>Step 5</span><strong>Follow-ups</strong><p>Create follow-up drafts.</p></a>
-        <a className="card" href="/deals"><span>Step 6</span><strong>Deals</strong><p>Track interested, client, or archived.</p></a>
+        <a className="card" href="/broad"><span>Step 1</span><strong>Nationwide Markets</strong><p>Rotate high-value niches and cities.</p></a>
+        <a className="card" href="/pipeline"><span>Step 2</span><strong>Outreach Pipeline</strong><p>Review, send, suppress failures, and track waiting leads.</p></a>
+        <a className="card" href="/inbox"><span>Step 3</span><strong>Reply Tracker</strong><p>Separate real interest from automated and negative replies.</p></a>
+        <a className="card" href="/concept-builder"><span>Step 4</span><strong>Free Mockup</strong><p>Turn interested prospects into a conversion-focused page plan.</p></a>
+        <a className="card" href="/pay"><span>Step 5</span><strong>Close $450</strong><p>Use the payment page only after mockup approval.</p></a>
+        <a className="card" href="/fulfillment"><span>Step 6</span><strong>Launch + Handoff</strong><p>Finalize, deploy, verify, and offer optional care.</p></a>
       </section>
 
       <section className="card finder-card">
         <h2>Real Lead Finder</h2>
-        <p>Find businesses, scan websites for emails, then create drafts for all email-ready leads.</p>
+        <p>Find quote- or appointment-driven businesses, verify contact paths, then create $450 lead-page outreach drafts for qualified email-ready leads.</p>
         <div className="finder-form">
-          <label>Niche<input value={finderNiche} onChange={(event) => setFinderNiche(event.target.value)} placeholder="Med Spa" /></label>
-          <label>City<input value={finderCity} onChange={(event) => setFinderCity(event.target.value)} placeholder="Pensacola" /></label>
+          <label>Niche<input value={finderNiche} onChange={(event) => setFinderNiche(event.target.value)} placeholder="Roofing" /></label>
+          <label>City<input value={finderCity} onChange={(event) => setFinderCity(event.target.value)} placeholder="Phoenix" /></label>
           <label>State<input value={finderState} onChange={(event) => setFinderState(event.target.value)} placeholder="FL" /></label>
           <button className="primary button-reset" disabled={finderLoading} onClick={findRealLeads}>{finderLoading ? "Finding..." : "Find With Google"}</button>
         </div>
