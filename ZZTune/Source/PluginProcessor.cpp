@@ -27,16 +27,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout ZZTuneAudioProcessor::create
     l.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"style",1},"Style",juce::StringArray{"Clean Rap","Smooth Melody","Hard Tune"},0));
     l.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"key",1},"Key",juce::StringArray{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"},0));
     l.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{"scale",1},"Scale",juce::StringArray{"Major","Minor","Chromatic"},0));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"tune",1},"Tune Strength",pct,72.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"speed",1},"Tune Speed",pct,75.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"human",1},"Humanize",pct,18.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"cleanup",1},"Cleanup EQ",pct,55.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"comp",1},"Compression",pct,55.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"deess",1},"De-Esser",pct,45.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"air",1},"Air / Presence",pct,45.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"warm",1},"Warmth",pct,18.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"space",1},"Space",pct,12.0f));
-    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"delay",1},"Delay",pct,8.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"tune",1},"Tune Strength",pct,65.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"speed",1},"Tune Speed",pct,68.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"human",1},"Humanize",pct,22.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"cleanup",1},"Cleanup EQ",pct,50.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"comp",1},"Compression",pct,48.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"deess",1},"De-Esser",pct,40.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"air",1},"Air / Presence",pct,35.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"warm",1},"Warmth",pct,12.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"space",1},"Space",pct,8.0f));
+    l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"delay",1},"Delay",pct,5.0f));
     l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"mix",1},"Tune Mix",pct,100.0f));
     l.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"output",1},"Output",juce::NormalisableRange<float>(-12.0f,6.0f,0.1f),0.0f));
     return l;
@@ -54,14 +54,14 @@ void ZZTuneAudioProcessor::prepareToPlay(double sampleRate, int)
         echoBuf[c].assign(echoN,0.0f);
     }
     resetDSP();
-    setLatencySamples((int) std::round(fs * 0.016));
+    setLatencySamples(0);
 }
 
 void ZZTuneAudioProcessor::resetDSP()
 {
-    pitchWrite=delayWrite=echoWrite=0; analyseCounter=0; detectedHz=confidence=0;
+    pitchWrite=delayWrite=echoWrite=0; analyseCounter=0; detectedHz=confidence=0; desiredRatio=1.0f;
     for(int c=0;c<2;++c){
-        smoothRatio[c]=1.0f; shiftPhase[c]=c?0.5f:0.0f;
+        smoothRatio[c]=1.0f; wetBlend[c]=0.0f; shiftPhase[c]=c?0.5f:0.0f;
         hpX1[c]=hpY1[c]=compEnv[c]=essLP[c]=essEnv[c]=rvState[c]=0.0f;
         std::fill(pitchBuf[c].begin(),pitchBuf[c].end(),0.0f);
         std::fill(delayBuf[c].begin(),delayBuf[c].end(),0.0f);
@@ -91,33 +91,77 @@ void ZZTuneAudioProcessor::analysePitch()
 {
     const auto& b=pitchBuf[0];
     if(b.empty()) return;
-    const int N=1024;
+
+    // CPU-safe tracker: analyse 1024 source samples at 2:1 decimation.
+    // v0.2.0 was doing a full 1024-sample correlation every 96 samples,
+    // which was unnecessarily heavy for a realtime FL Studio insert.
+    constexpr int D=2;
+    constexpr int N=512;
     std::array<float,N> x{};
     double mean=0.0;
     for(int i=0;i<N;++i){
-        size_t idx=(pitchWrite+b.size()-N+(size_t)i)%b.size();
-        x[(size_t)i]=b[idx]; mean+=x[(size_t)i];
+        size_t back=(size_t)((N-i)*D);
+        size_t idx=(pitchWrite+b.size()-back)%b.size();
+        x[(size_t)i]=b[idx];
+        mean+=x[(size_t)i];
     }
     mean/=N;
+
     double energy=0.0;
     for(auto& v:x){v-=(float)mean; energy+=(double)v*v;}
-    if(std::sqrt(energy/N)<0.0025){confidence=0; return;}
+    if(std::sqrt(energy/N)<0.0030){
+        confidence*=0.80f;
+        if(confidence<0.15f) detectedHz=0.0f;
+        return;
+    }
 
-    int minLag=std::max(2,(int)(fs/650.0));
-    int maxLag=std::min(N/2,(int)(fs/65.0));
-    float best=-1.0f; int bestLag=0;
-    for(int lag=minLag;lag<=maxLag;++lag){
+    const double analysisFs=fs/(double)D;
+    int minLag=std::max(2,(int)(analysisFs/650.0));
+    int maxLag=std::min(N/2-1,(int)(analysisFs/70.0));
+    float best=-1.0f;
+    int bestLag=0;
+
+    // Step through candidate lags by 2, then refine only around the winner.
+    for(int lag=minLag;lag<=maxLag;lag+=2){
         double xy=0,xx=0,yy=0;
-        int n=N-lag;
-        for(int i=0;i<n;++i){
+        const int n=N-lag;
+        for(int i=0;i<n;i+=2){
             float a=x[(size_t)i], bb=x[(size_t)(i+lag)];
             xy+=(double)a*bb; xx+=(double)a*a; yy+=(double)bb*bb;
         }
         float c=(float)(xy/(std::sqrt(xx*yy)+1e-12));
         if(c>best){best=c; bestLag=lag;}
     }
-    if(bestLag>0 && best>0.42f){detectedHz=(float)(fs/bestLag); confidence=best;}
-    else confidence=std::max(0.0f,best);
+
+    if(bestLag>0){
+        int lo=std::max(minLag,bestLag-2), hi=std::min(maxLag,bestLag+2);
+        for(int lag=lo;lag<=hi;++lag){
+            double xy=0,xx=0,yy=0;
+            const int n=N-lag;
+            for(int i=0;i<n;i+=2){
+                float a=x[(size_t)i], bb=x[(size_t)(i+lag)];
+                xy+=(double)a*bb; xx+=(double)a*a; yy+=(double)bb*bb;
+            }
+            float c=(float)(xy/(std::sqrt(xx*yy)+1e-12));
+            if(c>best){best=c; bestLag=lag;}
+        }
+    }
+
+    if(bestLag>0 && best>0.50f){
+        float hz=(float)(analysisFs/(double)bestLag);
+        if(detectedHz>0.0f){
+            float ratio=hz/detectedHz;
+            if(ratio>0.67f && ratio<1.50f)
+                detectedHz=0.72f*detectedHz+0.28f*hz;
+            else
+                detectedHz=hz;
+        } else {
+            detectedHz=hz;
+        }
+        confidence=0.65f*confidence+0.35f*best;
+    } else {
+        confidence*=0.82f;
+    }
 }
 
 float ZZTuneAudioProcessor::nearestTarget(float hz) const
@@ -148,55 +192,65 @@ float ZZTuneAudioProcessor::nearestTarget(float hz) const
 float ZZTuneAudioProcessor::readDelay(const std::vector<float>& d, float pos) const
 {
     float n=(float)d.size();
-    while(pos<0) pos+=n; while(pos>=n) pos-=n;
+    while(pos<0) pos+=n;
+    while(pos>=n) pos-=n;
     int i0=(int)std::floor(pos), i1=(i0+1)%(int)d.size();
     float f=pos-i0;
     return d[(size_t)i0]*(1.0f-f)+d[(size_t)i1]*f;
 }
 
-float ZZTuneAudioProcessor::pitchShift(float in, float ratio, int c)
+float ZZTuneAudioProcessor::pitchShift(float in, float ratio, int c, float speed)
 {
     auto& d=delayBuf[c];
     d[delayWrite]=in;
-    float speed=p(const_cast<juce::AudioProcessorValueTreeState&>(apvts),"speed")*0.01f;
-    float a=1.0f-std::exp(-1.0f/(float)(fs*(0.140-0.132*speed)));
-    smoothRatio[c]+=a*(clampf(ratio,0.72f,1.38f)-smoothRatio[c]);
-    if(std::abs(smoothRatio[c]-1.0f)<0.00035f) return in;
 
-    float minD=(float)(fs*0.0035), maxD=(float)(fs*0.016), range=maxD-minD;
+    float time=0.155f-0.140f*clampf(speed,0.0f,1.0f);
+    float a=1.0f-std::exp(-1.0f/(float)(fs*std::max(0.010f,time)));
+    smoothRatio[c]+=a*(clampf(ratio,0.78f,1.28f)-smoothRatio[c]);
+
+    if(std::abs(smoothRatio[c]-1.0f)<0.0002f)
+        return in;
+
+    float minD=(float)(fs*0.0045), maxD=(float)(fs*0.020), range=maxD-minD;
     shiftPhase[c]+=std::abs(1.0f-smoothRatio[c])/range;
     shiftPhase[c]-=std::floor(shiftPhase[c]);
-    float p1=shiftPhase[c], p2=p1+0.5f; p2-=std::floor(p2);
+
+    float p1=shiftPhase[c], p2=p1+0.5f;
+    p2-=std::floor(p2);
     auto dd=[&](float ph){return smoothRatio[c]>=1.0f?maxD-ph*range:minD+ph*range;};
-    float w1=0.5f-0.5f*std::cos(2.0f*kPi*p1), w2=0.5f-0.5f*std::cos(2.0f*kPi*p2);
+    float w1=0.5f-0.5f*std::cos(2.0f*kPi*p1);
+    float w2=0.5f-0.5f*std::cos(2.0f*kPi*p2);
     float y1=readDelay(d,(float)delayWrite-dd(p1));
     float y2=readDelay(d,(float)delayWrite-dd(p2));
     return y1*w1+y2*w2;
 }
 
-float ZZTuneAudioProcessor::strip(float x, int c, bool finish)
+float ZZTuneAudioProcessor::strip(float x, int c, bool finish,
+                                  float cleanup, float comp, float de, float air, float warm)
 {
-    float cleanup=p(apvts,"cleanup")*0.01f, comp=p(apvts,"comp")*0.01f;
-    float de=p(apvts,"deess")*0.01f, air=p(apvts,"air")*0.01f, warm=p(apvts,"warm")*0.01f;
     float fc=70.0f+55.0f*cleanup;
     float alpha=std::exp(-2.0f*kPi*fc/(float)fs);
-    float hp=alpha*(hpY1[c]+x-hpX1[c]); hpX1[c]=x; hpY1[c]=hp; x=hp;
+    float hp=alpha*(hpY1[c]+x-hpX1[c]);
+    hpX1[c]=x; hpY1[c]=hp; x=hp;
 
     float essA=1.0f-std::exp(-2.0f*kPi*4200.0f/(float)fs);
     essLP[c]+=essA*(x-essLP[c]);
     float hf=x-essLP[c];
     essEnv[c]=0.97f*essEnv[c]+0.03f*std::abs(hf);
     float th=0.020f-0.011f*de;
-    if(essEnv[c]>th) x*=dbGain(-std::min(6.0f*de,20.0f*std::log10(essEnv[c]/th)));
+    if(essEnv[c]>th)
+        x*=dbGain(-std::min(6.0f*de,20.0f*std::log10(essEnv[c]/th)));
 
     float ax=std::abs(x), atk=0.35f, rel=0.995f;
-    compEnv[c]=(ax>compEnv[c]?atk:rel)*compEnv[c]+(1.0f-(ax>compEnv[c]?atk:rel))*ax;
-    float threshold=-12.0f-10.0f*comp-(finish?2.0f:0.0f), ratioC=1.5f+3.5f*comp;
+    float k=ax>compEnv[c]?atk:rel;
+    compEnv[c]=k*compEnv[c]+(1.0f-k)*ax;
+    float threshold=-12.0f-10.0f*comp-(finish?2.0f:0.0f);
+    float ratioC=1.5f+3.5f*comp;
     float envDb=20.0f*std::log10(std::max(compEnv[c],1e-8f));
-    if(envDb>threshold) x*=dbGain((threshold+(envDb-threshold)/ratioC)-envDb);
+    if(envDb>threshold)
+        x*=dbGain((threshold+(envDb-threshold)/ratioC)-envDb);
 
-    float bright=1.0f+0.22f*air;
-    x*=bright;
+    x*=1.0f+0.22f*air;
     float drive=1.0f+1.7f*warm;
     x=std::tanh(x*drive)/std::tanh(drive);
     return x;
@@ -205,49 +259,81 @@ float ZZTuneAudioProcessor::strip(float x, int c, bool finish)
 void ZZTuneAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals nd;
-    int chs=buffer.getNumChannels(), n=buffer.getNumSamples();
-    bool finish=finishMode();
-    int style=pi(apvts,"style");
-    float tune=p(apvts,"tune")*0.01f, human=p(apvts,"human")*0.01f, mix=p(apvts,"mix")*0.01f;
-    float styleBase=style==2?0.85f:(style==1?0.45f:0.55f);
-    float strength=clampf(styleBase+0.42f*tune+(finish?0.08f:0.0f),0.0f,1.0f);
+    const int chs=buffer.getNumChannels(), n=buffer.getNumSamples();
+    const bool finish=finishMode();
+    const int style=pi(apvts,"style");
+
+    // Cache controls once per block instead of doing atomic parameter reads
+    // thousands of times per second on FL Studio's realtime audio thread.
+    const float tune=p(apvts,"tune")*0.01f;
+    const float speed=p(apvts,"speed")*0.01f;
+    const float human=p(apvts,"human")*0.01f;
+    const float mix=p(apvts,"mix")*0.01f;
+    const float cleanup=p(apvts,"cleanup")*0.01f;
+    const float comp=p(apvts,"comp")*0.01f;
+    const float deess=p(apvts,"deess")*0.01f;
+    const float air=p(apvts,"air")*0.01f;
+    const float warm=p(apvts,"warm")*0.01f;
+    const float delayAmt=p(apvts,"delay")*0.01f;
+    const float space=p(apvts,"space")*0.01f;
+    const float outGain=dbGain(p(apvts,"output"));
+
+    const float styleBase=style==2?0.82f:(style==1?0.42f:0.52f);
+    const float strength=clampf(styleBase+0.40f*tune+(finish?0.08f:0.0f),0.0f,1.0f);
+    const int analysisHop=finish?192:256;
 
     for(int i=0;i<n;++i){
         float mono=buffer.getSample(0,i);
         if(chs>1) mono=0.5f*(mono+buffer.getSample(1,i));
         pitchBuf[0][pitchWrite]=mono;
         pitchWrite=(pitchWrite+1)%pitchBuf[0].size();
-        if(++analyseCounter>=96){analyseCounter=0; analysePitch();}
 
-        float r=1.0f;
-        if(detectedHz>0 && confidence>0.45f){
-            float tgt=nearestTarget(detectedHz);
-            float raw=clampf(tgt/detectedHz,0.72f,1.38f);
-            float cents=std::abs(1200.0f*std::log2(std::max(raw,0.001f)));
-            float preserve=human*(1.0f-clampf(cents/45.0f,0.0f,1.0f))*(finish?0.4f:0.7f);
-            r=std::pow(raw,strength*(1.0f-preserve));
+        if(++analyseCounter>=analysisHop){
+            analyseCounter=0;
+            analysePitch();
+
+            desiredRatio=1.0f;
+            if(detectedHz>0.0f && confidence>0.52f){
+                float tgt=nearestTarget(detectedHz);
+                float raw=clampf(tgt/detectedHz,0.78f,1.28f);
+                float cents=std::abs(1200.0f*std::log2(std::max(raw,0.001f)));
+                float preserve=human*(1.0f-clampf(cents/45.0f,0.0f,1.0f))*(finish?0.40f:0.72f);
+                desiredRatio=std::pow(raw,strength*(1.0f-preserve));
+                if(cents<2.5f) desiredRatio=1.0f;
+            }
         }
 
-        for(int c=0;c<chs;++c){
-            float dry=buffer.getSample(c,i);
-            float wet=pitchShift(dry,r,std::min(c,1));
-            float y=dry*(1.0f-mix)+wet*mix;
-            y=strip(y,std::min(c,1),finish);
+        const float correctionCents=std::abs(1200.0f*std::log2(std::max(desiredRatio,0.001f)));
+        const float wantedBlend=(confidence>0.48f && correctionCents>2.0f)?1.0f:0.0f;
+        const float blendAttack=1.0f-std::exp(-1.0f/(float)(fs*0.012f));
+        const float blendRelease=1.0f-std::exp(-1.0f/(float)(fs*0.025f));
 
-            float delayAmt=p(apvts,"delay")*0.01f;
-            auto& ed=echoBuf[std::min(c,1)];
+        for(int c=0;c<chs;++c){
+            const int cc=std::min(c,1);
+            float dry=buffer.getSample(c,i);
+            float shifted=pitchShift(dry,desiredRatio,cc,speed);
+
+            float ba=wantedBlend>wetBlend[cc]?blendAttack:blendRelease;
+            wetBlend[cc]+=ba*(wantedBlend-wetBlend[cc]);
+            float actualMix=mix*wetBlend[cc];
+
+            // Smooth crossfade removes the clicks/chops caused when pitch confidence
+            // briefly drops on consonants, breaths, and word endings.
+            float y=dry+(shifted-dry)*actualMix;
+            y=strip(y,cc,finish,cleanup,comp,deess,air,warm);
+
+            auto& ed=echoBuf[cc];
             size_t rd=(echoWrite+ed.size()-(size_t)std::round(fs*0.155))%ed.size();
             float e=ed[rd];
             ed[echoWrite]=y+e*(0.12f+0.18f*delayAmt);
             y+=e*delayAmt*(finish?0.24f:0.15f);
 
-            float space=p(apvts,"space")*0.01f;
-            rvState[std::min(c,1)]=0.94f*rvState[std::min(c,1)]+0.06f*y;
-            y+=rvState[std::min(c,1)]*space*(finish?0.12f:0.07f);
+            rvState[cc]=0.94f*rvState[cc]+0.06f*y;
+            y+=rvState[cc]*space*(finish?0.12f:0.07f);
 
-            y*=dbGain(p(apvts,"output"));
-            buffer.setSample(c,i,clampf(y,-1.2f,1.2f));
+            buffer.setSample(c,i,clampf(y*outGain,-1.2f,1.2f));
         }
+
         delayWrite=(delayWrite+1)%delayBuf[0].size();
         echoWrite=(echoWrite+1)%echoBuf[0].size();
     }
