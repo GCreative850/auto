@@ -29,6 +29,8 @@ juce_add_plugin(ZZTune
   PRODUCT_NAME "ZZ Tune"
 )
 
+juce_generate_juce_header(ZZTune)
+
 target_sources(ZZTune PRIVATE
   Source/PluginProcessor.cpp
   Source/PluginProcessor.h
