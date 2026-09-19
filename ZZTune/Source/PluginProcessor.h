@@ -39,8 +39,9 @@ private:
     void resetDSP();
     void analysePitch();
     float nearestTarget(float hz) const;
-    float pitchShift(float input, float ratio, int channel);
-    float strip(float x, int channel, bool finish);
+    float pitchShift(float input, float ratio, int channel, float speed);
+    float strip(float x, int channel, bool finish,
+                float cleanup, float comp, float deess, float air, float warm);
     float readDelay(const std::vector<float>& d, float pos) const;
 
     double fs = 48000.0;
@@ -49,7 +50,9 @@ private:
     size_t pitchWrite = 0, delayWrite = 0;
     int analyseCounter = 0;
     float detectedHz = 0.0f, confidence = 0.0f;
+    float desiredRatio = 1.0f;
     float smoothRatio[2] {1.0f,1.0f};
+    float wetBlend[2] {0.0f,0.0f};
     float shiftPhase[2] {0.0f,0.5f};
     float hpX1[2] {}, hpY1[2] {};
     float compEnv[2] {}, essLP[2] {}, essEnv[2] {};
