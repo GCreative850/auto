@@ -1,0 +1,53 @@
+name: Build ZZ Tune Windows VST3
+
+on:
+  push:
+    branches: [ "zztune-build" ]
+    paths:
+      - "ZZTune/**"
+      - ".github/workflows/zztune-windows.yml"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout build branch
+        uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S ZZTune -B ZZTune/build -G "Visual Studio 17 2022" -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build VST3
+        shell: pwsh
+        run: |
+          cmake --build ZZTune/build --config Release --target ZZTune_VST3 --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify and package
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path "ZZTune/build" -Recurse -Directory -Filter "ZZ Tune.vst3" | Select-Object -First 1
+          if (-not $plugin) {
+            Write-Error "ZZ Tune.vst3 was not produced."
+            Get-ChildItem -Path "ZZTune/build" -Recurse | Select-Object FullName
+            exit 1
+          }
+          Write-Host "Built plugin: $($plugin.FullName)"
+          $out = Join-Path $PWD "ZZ-Tune-Windows-VST3.zip"
+          if (Test-Path $out) { Remove-Item $out -Force }
+          Compress-Archive -Path $plugin.FullName -DestinationPath $out -Force
+          if (-not (Test-Path $out)) { throw "ZIP package was not created." }
+
+      - name: Upload compiled plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZZ-Tune-Windows-VST3
+          path: ZZ-Tune-Windows-VST3.zip
+          if-no-files-found: error
+          retention-days: 30
